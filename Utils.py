@@ -8,10 +8,6 @@ class DataSet(Dataset):
         numSplits: int = 128,
     ):
         self.dataHolder = []
-        self.RCS = []
-        self.rangeDoppler = []
-        self.acoustic = []
-        self.label = []
         self.b, self.a = butter(2, 0.015, btype="highpass", analog=False)
 
         classLabel2index = {"NO": 0, "OO": 0, "T1": 1, "T2": 1, "T3": 1}
@@ -75,7 +71,7 @@ class DataSet(Dataset):
             frame: frame number
 
         Returns:
-            (#chirps, #samples) shaped radar matrix
+            (#chirps, #samples) shaped radar matrix at the index "frame"
         """
 
         data = np.fromfile(file_name, dtype=np.uint16)
@@ -161,22 +157,19 @@ class DataSet(Dataset):
             frame=self.dataHolder[idx][1],
         )
 
-        rangeDoppler = self.__dopplerProcess(beat_signal)
-        rcs = self.__rcsProcess(beat_signal)
-        acoustic = self.__readAudio(
-            f"/home/gevindu/Airforce Data/{self.dataHolder[idx][0]}.wav"
-        )
         return (
-            torch.tensor(rangeDoppler),
-            torch.tensor(rcs),
-            torch.tensor(acoustic),
+            torch.tensor(self.__dopplerProcess(beat_signal)),
+            torch.tensor(self.__rcsProcess(beat_signal)),
+            torch.tensor(self.__readAudio(
+            f"/home/gevindu/Airforce Data/{self.dataHolder[idx][0]}.wav"
+        )),
             torch.tensor(classIndex),
         )
 
 
 if __name__ == "__main__":
     dataset = DataSet()
-    train_set = DataLoader(dataset, batch_size=64, shuffle=True)
+    train_set = DataLoader(dataset, batch_size=128, shuffle=True)
 
     for X1, X2, X3, y in train_set:
         print(X1.shape)
