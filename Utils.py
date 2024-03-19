@@ -12,6 +12,7 @@ class DataSet(Dataset):
         self.rangeDoppler = []
         self.acoustic = []
         self.label = []
+        self.b, self.a = butter(2, 0.015, btype="highpass", analog=False)
 
         classLabel2index = {"NO": 0, "OO": 0, "T1": 1, "T2": 1, "T3": 1}
         classCount = {0: 0, 1: np.inf}
@@ -98,8 +99,10 @@ class DataSet(Dataset):
         droneSound = droneSound[index : index + 8000]
         return (droneSound - np.mean(droneSound)) / np.std(droneSound)
 
-    def __binProcess(self, beat_signal: np.ndarray, filter: bool = False):
-        """Get a radar matrix as the input and process the range-doppler and RCS. Additioanlly, remove the zero doppler component.
+    def __dopplerProcess(
+        self, beat_signal: np.ndarray, filter: bool = False
+    ) -> np.ndarray:
+        """Get a radar matrix as the input and process the range-doppler. Additioanlly, remove the zero doppler component.
 
         Args:
             beat_signal: (#chirps, #samples) shaped beat signal
@@ -111,10 +114,9 @@ class DataSet(Dataset):
         radarRange = np.rot90(np.fft.fft(beat_signal, axis=1), 1)
 
         if filter:
-            b, a = butter(2, 0.015, btype="highpass", analog=False)
-            radarRange = filtfilt(b, a, radarRange)
+            radarRange = filtfilt(self.b, self.a, radarRange)
+
         doppler = np.abs(np.fft.fft(radarRange))
-        # beat_signal_filtered = np.fft.ifft(np.rot90(radarRange, 3, axes=(1, 2)))
 
         doppler_map = np.empty_like(doppler)
         doppler_map[:, :64], doppler_map[:, 64:] = (
@@ -128,6 +130,24 @@ class DataSet(Dataset):
             * 255
         )
 
+    def __rcsProcess(self, beat_signal: np.ndarray, filter: bool = False) -> np.ndarray:
+        """Get a radar matrix as the input and process the RCS. Additioanlly, remove the zero doppler component.
+
+        Args:
+            beat_signal: (#chirps, #samples) shaped beat signal
+            filter: applying the zero doppler filtering if True
+        Returns:
+             (#dopplerBins, ) RCS array
+        """
+
+        radarRange = np.rot90(np.fft.fft(beat_signal, axis=1), 1)
+
+        if filter:
+            radarRange = filtfilt(self.b, self.a, radarRange)
+
+        beat_signal = np.fft.ifft(np.rot90(radarRange, 3))
+        return np.mean(np.abs(beat_signal) ** 2, axis=1)
+
     def __len__(self):
         return len(self.dataHolder)
 
@@ -135,17 +155,20 @@ class DataSet(Dataset):
         # print(idx, self.dataHolder[idx])
 
         classIndex = self.dataHolder[idx][2]
-        rangeDoppler = self.__binProcess(
-            self.__readBin(
-                f"Airforce Data/{self.dataHolder[idx][0]}.bin",
-                frame=self.dataHolder[idx][1],
-            )
+
+        beat_signal = self.__readBin(
+            f"/home/gevindu/Airforce Data/{self.dataHolder[idx][0]}.bin",
+            frame=self.dataHolder[idx][1],
         )
+
+        rangeDoppler = self.__dopplerProcess(beat_signal)
+        rcs = self.__rcsProcess(beat_signal)
         acoustic = self.__readAudio(
-            f"Airforce Data/{self.dataHolder[idx][0]}.wav"
+            f"/home/gevindu/Airforce Data/{self.dataHolder[idx][0]}.wav"
         )
         return (
             torch.tensor(rangeDoppler),
+            torch.tensor(rcs),
             torch.tensor(acoustic),
             torch.tensor(classIndex),
         )
@@ -155,8 +178,9 @@ if __name__ == "__main__":
     dataset = DataSet()
     train_set = DataLoader(dataset, batch_size=64, shuffle=True)
 
-    for X1, X2, y in train_set:
+    for X1, X2, X3, y in train_set:
         print(X1.shape)
         print(X2.shape)
+        print(X3.shape)
         print(y.shape)
         break
