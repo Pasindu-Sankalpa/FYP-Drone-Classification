@@ -7,23 +7,25 @@ from Plotter import Plotter
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print("Device:", device, "\n")
 
-
 arg_dict = {"model name": "Final_model",
-            "epochs": 2,
+            "epochs": 20,
             "batch_size": 32,
             "lr": 1e-5,
             "weight_decay": 0.4,
             "num_classes": 2
            }
 
-plotter = Plotter(model_name=arg_dict['model name'])
-train, validation = random_split(DataSet(), lengths=(0.85, 0.15))
+train, validation, test = random_split(DataSet(), lengths=(0.8, 0.15, 0.05))
 train_set = DataLoader(train, batch_size=arg_dict['batch_size'], shuffle=True)
 validation_set = DataLoader(validation, batch_size=arg_dict['batch_size'], shuffle=True)
+test_set = DataLoader(test, batch_size=arg_dict['batch_size'], shuffle=True)
 
-dataset_sizes = {'train':len(train), 'validation':len(validation)}
-loaders = {'train':train_set, 'validation':validation_set}
+dataset_sizes = {'train':len(train), 'validation':len(validation), 'test':len(test)}
+loaders = {'train':train_set, 'validation':validation_set, 'test': test_set}
+# print(dataset_sizes)
+
 train_n_evaluate = Train_n_evaluate(loaders, dataset_sizes, device)
+plotter = Plotter(model_name=arg_dict['model name'])
 
 model = Model().to(device)
 
@@ -32,11 +34,10 @@ optimizer = torch.optim.Adam(model.parameters(), lr = arg_dict["lr"], weight_dec
 
 model, losses, accuracies = train_n_evaluate.train_model(model, criterion, optimizer, arg_dict["epochs"], scheduler=None)
 plotter.plot_learnining_curves(losses, accuracies)
-# actuals, predictions = train_n_evaluate.evaluate_model(model, dataset="validation")
-# plotter.plot_confusion_matrix(actuals, predictions, arg_dict["num_classes"])
+actuals, predictions = train_n_evaluate.evaluate_model(model, dataset="test")
+plotter.plot_confusion_matrix(actuals, predictions, arg_dict["num_classes"])
+
 # plotter.plot_lr(scheduler.get_lr_schedule())
 
-# torch.save(model, f"/home/gevindu/Gevindu/Models/{arg_dict['model name']}.pth")
-# print(f"\nSaved to /home/gevindu/Gevindu/Models/{arg_dict['model name']}.pth")
-
-# print(model)
+torch.save(model, f"/home/gevindu/FYP-Drone-Classification/Saved models/{arg_dict['model name']}.pth")
+print(f"\nSaved to /home/gevindu/FYP-Drone-Classification/Saved models/{arg_dict['model name']}.pth")

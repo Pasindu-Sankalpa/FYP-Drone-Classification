@@ -66,13 +66,13 @@ class Train_n_evaluate:
         return model, losses, accuracies
 
     def evaluate_model(self, model, dataset):
-        global device
         model.eval()
         predictions, actuals = [], []
 
-        for inputs, labels in self.loaders[dataset]:
+        for doppler, rcs, acoustic, labels in tqdm(self.loaders[dataset]):
+            doppler, rcs, acoustic = doppler.to(self.device), rcs.to(self.device), acoustic.to(self.device)
             with torch.no_grad():
-                outputs = model(inputs.float().to(self.device))
+                outputs = model(doppler, rcs, acoustic)
                 _, preds = torch.max(outputs, dim=1)
 
             preds = preds.to("cpu").numpy()
@@ -85,7 +85,7 @@ class Train_n_evaluate:
         f1 = f1_score(actuals, predictions, average="weighted", zero_division=0)
 
         print(
-            "\nRe-evaluated on {} set\nAccuracy: {}%, f1-score: {}".format(
+            "\nEvaluated on {} set\nAccuracy: {}%, f1-score: {}".format(
                 dataset, round(acc, 5) * 100, round(f1, 5)
             )
         )
