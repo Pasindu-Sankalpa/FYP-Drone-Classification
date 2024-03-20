@@ -29,10 +29,6 @@ class Train_n_evaluate:
                     doppler, rcs, acoustic, labels = doppler.to(self.device), rcs.to(self.device), acoustic.to(self.device), labels.to(self.device)
                     optimizer.zero_grad()
 
-                    print(doppler.shape)
-                    print(rcs.shape)
-                    print(acoustic.shape)
-
                     with torch.set_grad_enabled(phase == "train"):
                         outputs = model(doppler, rcs, acoustic)
                         _, pred = torch.max(outputs, dim=1)

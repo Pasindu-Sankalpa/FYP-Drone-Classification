@@ -10,7 +10,7 @@ print("Device:", device, "\n")
 
 arg_dict = {"model name": "Final_model",
             "epochs": 2,
-            "batch_size": 128,
+            "batch_size": 32,
             "lr": 1e-5,
             "weight_decay": 0.4,
             "num_classes": 2
@@ -29,7 +29,6 @@ model = Model().to(device)
 
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr = arg_dict["lr"], weight_decay=arg_dict["weight_decay"])
-# scheduler = Custom_step_scheduler(optimizer, arg_dict["lr"], steps=5, ratio=0.5)
 
 model, losses, accuracies = train_n_evaluate.train_model(model, criterion, optimizer, arg_dict["epochs"], scheduler=None)
 plotter.plot_learnining_curves(losses, accuracies)
