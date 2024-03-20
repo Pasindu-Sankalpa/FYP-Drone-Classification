@@ -16,6 +16,7 @@ class UnsqueezeLayer(nn.Module):
     def forward(self, x):
         for d in self.dim:
             x = torch.unsqueeze(x, dim=d)
+
         return x
     
 class SEModule1d(nn.Module):
@@ -87,7 +88,7 @@ class SEResNet1d(nn.Module):
     
 
 class SEModule2d(nn.Module):
-    def __init__(self, in_channels, reduction=16):
+    def __init__(self, in_channels, reduction=4):
         super(SEModule2d, self).__init__()
         self.se = nn.Sequential(nn.AdaptiveAvgPool2d((1, 1)),
                                 SqueezeLayer(dim=(2, 3)),
@@ -131,16 +132,16 @@ class SEResNet2d(nn.Module):
                                       SEResBlock2d(4, upsample=4, kernel_size=3),
                                       SEResBlock2d(16, upsample=4, kernel_size=5), 
                                       SEResBlock2d(64, upsample=2, kernel_size=7),
-                                      nn.AdaptiveAvgPool2d(1),
+                                      nn.AdaptiveAvgPool2d((1,1)),
                                       SqueezeLayer(dim=(2, 3)))
 
     def forward(self, input):
         return self.seresnet(input)
 
 class Model(nn.Module):
-    def __init__(self, batch_size=8, base_channels=64, num_classes=2):
+    def __init__(self, device, batch_size=8, base_channels=64, num_classes=2,):
         super(Model, self).__init__()
-        self.onces = torch.ones((batch_size, 128))
+        self.onces = torch.ones((batch_size, 128)).to(device)
         self.acoustic_encoder_1 = SEResNet1d(base_channels, kernel_size=7, downsample=True)
         self.acoustic_encoder_2 = SEResNet1d(base_channels, kernel_size=107, downsample=True)
         self.rcs_encoder = SEResNet1d(base_channels, kernel_size=7, downsample=False)
@@ -149,7 +150,7 @@ class Model(nn.Module):
         self.transformer_encoder = nn.TransformerEncoder(encoder_layer, num_layers=1)
         self.classifier = nn.Linear(128, num_classes)
 
-    def forward(self, audio, rcs, doppler):  
+    def forward(self, doppler, rcs, audio):  
         acoustic_encoded = torch.sum(torch.stack([self.acoustic_encoder_1(audio), 
                                                   self.acoustic_encoder_2(audio)
                                                   ], dim = 1), dim = 1)
@@ -172,11 +173,22 @@ class Model(nn.Module):
         return output
     
 
-if __name__ == "__main__":
-    batch_size = 8
-    audio = torch.rand((batch_size, 8000))
-    rcs = torch.rand((batch_size, 128))
-    doppler = torch.rand((batch_size, 256, 128))
-    model = Model()
+if __name__ == "__main__": 
+    from DataSet import DataSet
 
-    out = model(audio, rcs, doppler)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    print("Device:", device, "\n")
+
+    model = Model(device).to(device)
+    
+    dataset = DataSet()
+    train_set = DataLoader(dataset, batch_size=8, shuffle=True)
+
+    for X1, X2, X3, y in train_set:
+        print(X1.shape, X1.dtype)
+        print(X2.shape, X2.dtype)
+        print(X3.shape, X3.dtype)
+        print(y.shape, y.dtype)
+        print("")
+        out = model(X1.to(device), X2.to(device), X3.to(device))
+        break

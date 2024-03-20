@@ -17,6 +17,7 @@ class DataSet(Dataset):
             classCount[0] * 0.95 < classCount[1]
             and classCount[1] < classCount[0] * 1.05
         ):
+            self.dataHolder = []
             classCount[0], classCount[1] = 0, 0
             with open(file_dir, mode="r") as file:
                 for dataPoint in csv.reader(file):
@@ -158,12 +159,12 @@ class DataSet(Dataset):
         )
 
         return (
-            torch.tensor(self.__dopplerProcess(beat_signal)),
-            torch.tensor(self.__rcsProcess(beat_signal)),
+            torch.tensor(self.__dopplerProcess(beat_signal), dtype=torch.float),
+            torch.tensor(self.__rcsProcess(beat_signal), dtype=torch.float),
             torch.tensor(self.__readAudio(
             f"/home/gevindu/Airforce Data/{self.dataHolder[idx][0]}.wav"
-        )),
-            torch.tensor(classIndex),
+        ), dtype=torch.float),
+            torch.tensor(classIndex, dtype=torch.float),
         )
 
 
@@ -172,6 +173,7 @@ if __name__ == "__main__":
     train_set = DataLoader(dataset, batch_size=128, shuffle=True)
 
     for X1, X2, X3, y in train_set:
+        print(train_set[0])
         print(X1.shape)
         print(X2.shape)
         print(X3.shape)
