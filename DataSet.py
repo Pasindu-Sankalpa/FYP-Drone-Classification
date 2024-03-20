@@ -154,7 +154,7 @@ class DataSet(Dataset):
         classIndex = self.dataHolder[idx][2]
 
         beat_signal = self.__readBin(
-            f"/home/gevindu/Airforce Data/{self.dataHolder[idx][0]}.bin",
+            f"/home/gevindu/model_final/Airforce Data/{self.dataHolder[idx][0]}.bin",
             frame=self.dataHolder[idx][1],
         )
 
@@ -162,7 +162,7 @@ class DataSet(Dataset):
             torch.tensor(self.__dopplerProcess(beat_signal), dtype=torch.float),
             torch.tensor(self.__rcsProcess(beat_signal), dtype=torch.float),
             torch.tensor(self.__readAudio(
-            f"/home/gevindu/Airforce Data/{self.dataHolder[idx][0]}.wav"
+            f"/home/gevindu/model_final/Airforce Data/{self.dataHolder[idx][0]}.wav"
         ), dtype=torch.float),
             torch.tensor(classIndex, dtype=torch.float),
         )

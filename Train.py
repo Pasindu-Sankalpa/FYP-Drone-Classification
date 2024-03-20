@@ -39,5 +39,5 @@ plotter.plot_confusion_matrix(actuals, predictions, arg_dict["num_classes"])
 
 # plotter.plot_lr(scheduler.get_lr_schedule())
 
-torch.save(model, f"/home/gevindu/FYP-Drone-Classification/Saved models/{arg_dict['model name']}.pth")
-print(f"\nSaved to /home/gevindu/FYP-Drone-Classification/Saved models/{arg_dict['model name']}.pth")
+torch.save(model, f"/home/gevindu/model_final/Saved models/{arg_dict['model name']}.pth")
+print(f"\nSaved to /home/gevindu/model_final/Saved models/{arg_dict['model name']}.pth")
