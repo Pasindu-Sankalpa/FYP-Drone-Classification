@@ -7,15 +7,15 @@ from Plotter import Plotter
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print("Device:", device, "\n")
 
-arg_dict = {"model name": "Final_model",
-            "epochs": 20,
-            "batch_size": 32,
+arg_dict = {"model name": "Final_model_v2",
+            "epochs": 30,
+            "batch_size": 64,
             "lr": 1e-5,
             "weight_decay": 0.4,
             "num_classes": 2
            }
 
-train, validation, test = random_split(DataSet(), lengths=(0.8, 0.15, 0.05))
+train, validation, test = random_split(DataSet(), lengths=(0.7, 0.25, 0.05))
 train_set = DataLoader(train, batch_size=arg_dict['batch_size'], shuffle=True)
 validation_set = DataLoader(validation, batch_size=arg_dict['batch_size'], shuffle=True)
 test_set = DataLoader(test, batch_size=arg_dict['batch_size'], shuffle=True)
