@@ -175,7 +175,6 @@ class SEResNet2d(nn.Module):
 class Model(nn.Module):
     def __init__(
         self,
-        batch_size=8,
         base_channels=64,
         num_classes=2,
     ):
@@ -188,8 +187,9 @@ class Model(nn.Module):
         )
         self.rcs_encoder = SEResNet1d(base_channels, kernel_size=7, downsample=False)
         self.doppler_encoder = SEResNet2d()
-        encoder_layer = nn.TransformerEncoderLayer(d_model=128, nhead=8)
-        self.transformer_encoder = nn.TransformerEncoder(encoder_layer, num_layers=1)
+        self.transformer_encoder = nn.TransformerEncoder(
+            nn.TransformerEncoderLayer(d_model=128, nhead=8), num_layers=1
+        )
         self.classifier = nn.Linear(128, num_classes)
 
     def forward(self, doppler, rcs, audio):
@@ -217,7 +217,7 @@ if __name__ == "__main__":
     model = Model(device).to(device)
     pytorch_total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(pytorch_total_params)
-    
+
     # dataset = DataSet()
     # train_set = DataLoader(dataset, batch_size=8, shuffle=True)
 

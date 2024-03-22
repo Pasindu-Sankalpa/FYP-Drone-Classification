@@ -2,3 +2,4 @@
 2. No filtering is implemented.
 3. RCS is not normalized.
 4. Radar frames sampled continuously, not 1 - 1.
+5. Add a [CLS] embedding
