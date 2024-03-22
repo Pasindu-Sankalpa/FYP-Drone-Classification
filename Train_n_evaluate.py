@@ -42,7 +42,7 @@ class Train_n_evaluate:
                     running_corrects += torch.sum(pred == labels)
 
                 epoch_loss = running_loss / self.dataset_sizes[phase]
-                epoch_acc = running_corrects.double() / self.dataset_sizes[phase] * 100
+                epoch_acc = running_corrects.float() / self.dataset_sizes[phase] * 100
                 losses[phase].append(epoch_loss)
                 accuracies[phase].append(epoch_acc.to("cpu"))
 
@@ -59,8 +59,11 @@ class Train_n_evaluate:
             print("\n")
 
         time_elapsed = time.time() - since
-        print("Training Time {}m {}s".format(time_elapsed // 60, time_elapsed % 60))
-        print("Best accuracy {}".format(best_acc))
+        hours = time_elapsed//3600
+        mins = time_elapsed//60 - hours*60
+        secs = time_elapsed%60
+        print("Training Time {}h {}m {}s".format(hours, mins, secs))
+        print("Best validation accuracy {}".format(best_acc))
 
         model.load_state_dict(best_model)
         return model, losses, accuracies

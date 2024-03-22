@@ -9,7 +9,7 @@ print("Device:", device, "\n")
 
 arg_dict = {"model name": "Final_model_v2",
             "epochs": 30,
-            "batch_size": 64,
+            "batch_size": 32,
             "lr": 1e-5,
             "weight_decay": 0.4,
             "num_classes": 2
@@ -36,8 +36,6 @@ model, losses, accuracies = train_n_evaluate.train_model(model, criterion, optim
 plotter.plot_learnining_curves(losses, accuracies)
 actuals, predictions = train_n_evaluate.evaluate_model(model, dataset="test")
 plotter.plot_confusion_matrix(actuals, predictions, arg_dict["num_classes"])
-
-# plotter.plot_lr(scheduler.get_lr_schedule())
 
 torch.save(model, f"/home/gevindu/model_final/Saved models/{arg_dict['model name']}.pth")
 print(f"\nSaved to /home/gevindu/model_final/Saved models/{arg_dict['model name']}.pth")
