@@ -4,10 +4,23 @@ from Libs import *
 class DataSet(Dataset):
     def __init__(
         self,
-        file_dir: str = "Data Collection - Collection state.csv",
+        fileDir: os.PathLike = "Data Collection - Collection state.csv",
+        datasetDir: os.PathLike = "/home/gevindu/model_final/Airforce Data",
         numSplits: int = 128,
+        filter: bool = False,
+        verbose: bool = False,
     ):
-        self.dataHolder = []
+        """Class to access the dataset collected from airforce.
+
+        Args:
+            fileDir: CSV file path which contains the dataset file names
+            datasetDir: folder path which contains the dataset files
+            numSplits: number of samples extract from a single file
+            filter: apply zerp doppler filter to the radar at doppler and RCS processing
+            verbose: print number of samples for class
+        """
+        self.datasetDir = datasetDir
+        self.filter = filter
         self.b, self.a = butter(2, 0.015, btype="highpass", analog=False)
 
         classLabel2index = {"NO": 0, "OO": 0, "T1": 1, "T2": 1, "T3": 1}
@@ -19,13 +32,15 @@ class DataSet(Dataset):
         ):
             self.dataHolder = []
             classCount[0], classCount[1] = 0, 0
-            with open(file_dir, mode="r") as file:
+            with open(fileDir, mode="r") as file:
                 for dataPoint in csv.reader(file):
                     for split in range(numSplits):
+                        # adding the datapoint to araay
                         self.dataHolder.append(
                             (dataPoint[1], split, classLabel2index[dataPoint[1][-5:-3]])
                         )
                         classCount[classLabel2index[dataPoint[1][-5:-3]]] += 1
+                        # addding again if the label is 0
                         if not classLabel2index[dataPoint[1][-5:-3]]:
                             self.dataHolder.append(
                                 (
@@ -35,6 +50,7 @@ class DataSet(Dataset):
                                 )
                             )
                             classCount[classLabel2index[dataPoint[1][-5:-3]]] += 1
+                        # adding again at random if the label is 0
                         if (
                             not classLabel2index[dataPoint[1][-5:-3]]
                             and self.__genTrue()
@@ -47,7 +63,8 @@ class DataSet(Dataset):
                                 )
                             )
                             classCount[classLabel2index[dataPoint[1][-5:-3]]] += 1
-        # print(classCount)
+        if verbose:
+            print(classCount)
 
     def __genTrue(self, trueProb: float = 0.4) -> bool:
         """Return True with a given probability, False otherwise. Used in upsampling the dataset.
@@ -96,21 +113,18 @@ class DataSet(Dataset):
         droneSound = droneSound[index : index + 8000]
         return (droneSound - np.mean(droneSound)) / np.std(droneSound)
 
-    def __dopplerProcess(
-        self, beat_signal: np.ndarray, filter: bool = False
-    ) -> np.ndarray:
+    def __dopplerProcess(self, beat_signal: np.ndarray) -> np.ndarray:
         """Get a radar matrix as the input and process the range-doppler. Additioanlly, remove the zero doppler component.
 
         Args:
             beat_signal: (#chirps, #samples) shaped beat signal
-            filter: applying the zero doppler filtering if True
         Returns:
              (#rangeBins, #dopplerBins) shaped range-doppler map
         """
 
         radarRange = np.rot90(np.fft.fft(beat_signal, axis=1), 1)
 
-        if filter:
+        if self.filter:
             radarRange = filtfilt(self.b, self.a, radarRange)
 
         doppler = np.abs(np.fft.fft(radarRange))
@@ -127,19 +141,18 @@ class DataSet(Dataset):
             * 255
         )
 
-    def __rcsProcess(self, beat_signal: np.ndarray, filter: bool = False) -> np.ndarray:
+    def __rcsProcess(self, beat_signal: np.ndarray) -> np.ndarray:
         """Get a radar matrix as the input and process the RCS. Additioanlly, remove the zero doppler component.
 
         Args:
             beat_signal: (#chirps, #samples) shaped beat signal
-            filter: applying the zero doppler filtering if True
         Returns:
              (#dopplerBins, ) RCS array
         """
 
         radarRange = np.rot90(np.fft.fft(beat_signal, axis=1), 1)
 
-        if filter:
+        if self.filter:
             radarRange = filtfilt(self.b, self.a, radarRange)
 
         beat_signal = np.fft.ifft(np.rot90(radarRange, 3))
@@ -149,22 +162,19 @@ class DataSet(Dataset):
         return len(self.dataHolder)
 
     def __getitem__(self, idx):
-        # print(idx, self.dataHolder[idx])
-
-        classIndex = self.dataHolder[idx][2]
-
         beat_signal = self.__readBin(
-            f"/home/gevindu/model_final/Airforce Data/{self.dataHolder[idx][0]}.bin",
+            f"{self.datasetDir}/{self.dataHolder[idx][0]}.bin",
             frame=self.dataHolder[idx][1],
         )
 
         return (
             torch.tensor(self.__dopplerProcess(beat_signal), dtype=torch.float),
             torch.tensor(self.__rcsProcess(beat_signal), dtype=torch.float),
-            torch.tensor(self.__readAudio(
-            f"/home/gevindu/model_final/Airforce Data/{self.dataHolder[idx][0]}.wav"
-        ), dtype=torch.float),
-            torch.tensor(classIndex, dtype=torch.float),
+            torch.tensor(
+                self.__readAudio(f"{self.datasetDir}/{self.dataHolder[idx][0]}.wav"),
+                dtype=torch.float,
+            ),
+            torch.tensor(self.dataHolder[idx][2], dtype=torch.float),
         )
 
 
@@ -173,7 +183,6 @@ if __name__ == "__main__":
     train_set = DataLoader(dataset, batch_size=128, shuffle=True)
 
     for X1, X2, X3, y in train_set:
-        print(train_set[0])
         print(X1.shape)
         print(X2.shape)
         print(X3.shape)

@@ -1,3 +1,4 @@
-1. Audio sample at random.
+1. Audio sampled at random.
 2. No filtering is implemented.
 3. RCS is not normalized.
+4. Radar frames sampled continuously, not 1 - 1.
