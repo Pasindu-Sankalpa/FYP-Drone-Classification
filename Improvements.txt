@@ -1,5 +1,9 @@
+https://docs.google.com/spreadsheets/d/1uR4T62CNPJCzFIPJ4fcTEMSAwFmEKvNMasiXAosE_JY/edit?usp=sharing
+
 1. Audio sampled at random.
 2. No filtering is implemented.
 3. RCS is not normalized.
 4. Radar frames sampled continuously, not 1 - 1.
-5. Add a [CLS] embedding
+
+
+

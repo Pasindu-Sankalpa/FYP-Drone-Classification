@@ -187,6 +187,7 @@ class Model(nn.Module):
         )
         self.rcs_encoder = SEResNet1d(base_channels, kernel_size=7, downsample=False)
         self.doppler_encoder = SEResNet2d()
+    
         self.transformer_encoder = nn.TransformerEncoder(
             nn.TransformerEncoderLayer(d_model=128, nhead=8), num_layers=1
         )
@@ -199,11 +200,15 @@ class Model(nn.Module):
             ),
             dim=1,
         )
+
         rcs_encoded = self.rcs_encoder(rcs)
         doppler_encoded = self.doppler_encoder(doppler)
+
         return self.classifier(
             self.transformer_encoder(
-                torch.stack((acoustic_encoded, rcs_encoded, doppler_encoded), dim=1)
+                torch.stack(
+                    (acoustic_encoded, rcs_encoded, doppler_encoded), dim=1
+                )
             )[:, 0, :]
         )
 

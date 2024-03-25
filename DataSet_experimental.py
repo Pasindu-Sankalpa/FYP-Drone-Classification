@@ -181,32 +181,67 @@ class DataSet(Dataset):
 class TestDataSet(Dataset):
     def __init__(
         self,
-        fileName: os.PathLike = "20240313_T4_17",
+        filename: os.PathLike = "20240313_T4_17",
         datasetDir: os.PathLike = "/home/gevindu/model_final/Airforce Data",
         numSplits: int = 128,
         filter: bool = False,
+        verbose: bool = False,
     ):
         """Class to access the dataset collected from airforce.
 
         Args:
-            fileName: file to be tested
+            fileDir: CSV file path which contains the dataset file names
             datasetDir: folder path which contains the dataset files
             numSplits: number of samples extract from a single file
             filter: apply zerp doppler filter to the radar at doppler and RCS processing
+            verbose: print number of samples for class
         """
         self.datasetDir = datasetDir
         self.filter = filter
         self.b, self.a = butter(2, 0.015, btype="highpass", analog=False)
 
-        classLabel2index = {"NO": 0, "OO": 0, "T1": 1, "T2": 1, "T3": 1, "T4":1}
-        
-        self.dataHolder = []
-        
-        for split in range(numSplits):
-            # adding the datapoint to araay
-            self.dataHolder.append(
-                (fileName, split, classLabel2index[fileName[-5:-3]])
-            )
+        classLabel2index = {"NO": 0, "OO": 0, "T1": 1, "T2": 1, "T3": 1}
+        classCount = {0: 0, 1: np.inf}
+
+        while not (
+            classCount[0] * 0.95 < classCount[1]
+            and classCount[1] < classCount[0] * 1.05
+        ):
+            self.dataHolder = []
+            classCount[0], classCount[1] = 0, 0
+            with open(fileDir, mode="r") as file:
+                for dataPoint in csv.reader(file):
+                    for split in range(numSplits):
+                        # adding the datapoint to araay
+                        self.dataHolder.append(
+                            (dataPoint[1], split, classLabel2index[dataPoint[1][-5:-3]])
+                        )
+                        classCount[classLabel2index[dataPoint[1][-5:-3]]] += 1
+                        # addding again if the label is 0
+                        if not classLabel2index[dataPoint[1][-5:-3]]:
+                            self.dataHolder.append(
+                                (
+                                    dataPoint[1],
+                                    split,
+                                    classLabel2index[dataPoint[1][-5:-3]],
+                                )
+                            )
+                            classCount[classLabel2index[dataPoint[1][-5:-3]]] += 1
+                        # adding again at random if the label is 0
+                        if (
+                            not classLabel2index[dataPoint[1][-5:-3]]
+                            and self.__genTrue()
+                        ):
+                            self.dataHolder.append(
+                                (
+                                    dataPoint[1],
+                                    split,
+                                    classLabel2index[dataPoint[1][-5:-3]],
+                                )
+                            )
+                            classCount[classLabel2index[dataPoint[1][-5:-3]]] += 1
+        if verbose:
+            print(classCount)
 
     def __genTrue(self, trueProb: float = 0.4) -> bool:
         """Return True with a given probability, False otherwise. Used in upsampling the dataset.
