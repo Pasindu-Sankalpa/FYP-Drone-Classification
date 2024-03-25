@@ -211,26 +211,65 @@ class Model(nn.Module):
                 )
             )[:, 0, :]
         )
+    
+class ClassificationModel(nn.Module):
+    def __init__(
+        self,
+        base_channels=64,
+        num_classes=4,
+    ):
+        super(ClassificationModel, self).__init__()
+        self.acoustic_encoder_1 = SEResNet1d(
+            base_channels, kernel_size=7, downsample=True
+        )
+        self.acoustic_encoder_2 = SEResNet1d(
+            base_channels, kernel_size=107, downsample=True
+        )
+        self.rcs_encoder = SEResNet1d(base_channels, kernel_size=7, downsample=False)
+        self.doppler_encoder = SEResNet2d()
+    
+        self.transformer_encoder = nn.TransformerEncoder(
+            nn.TransformerEncoderLayer(d_model=128, nhead=8), num_layers=1
+        )
+        self.detector = nn.Linear(128, 2)
+        self.classifier = nn.Linear(128, num_classes)
+
+    def forward(self, doppler, rcs, audio):
+        acoustic_encoded = torch.sum(
+            torch.stack(
+                [self.acoustic_encoder_1(audio), self.acoustic_encoder_2(audio)], dim=1
+            ),
+            dim=1,
+        )
+
+        rcs_encoded = self.rcs_encoder(rcs)
+        doppler_encoded = self.doppler_encoder(doppler)
+
+        stacked = self.transformer_encoder(
+                torch.stack(
+                    (acoustic_encoded, rcs_encoded, doppler_encoded), dim=1
+                )
+            )
+
+        return self.detector(stacked[:, 0, :]), self.classifier(stacked[:, 1, :])
 
 
 if __name__ == "__main__":
-    from DataSet import DataSet
+    from DataSet import ClassificationDataSet
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print("Device:", device, "\n")
 
-    model = Model(device).to(device)
-    pytorch_total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    print(pytorch_total_params)
+    model = ClassificationModel().to(device)
+   
+    # pytorch_total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    # print(pytorch_total_params)
 
-    # dataset = DataSet()
-    # train_set = DataLoader(dataset, batch_size=8, shuffle=True)
+    dataset = ClassificationDataSet()
+    train_set = DataLoader(dataset, batch_size=8, shuffle=True)
 
-    # for X1, X2, X3, y in train_set:
-    #     print(X1.shape, X1.dtype)
-    #     print(X2.shape, X2.dtype)
-    #     print(X3.shape, X3.dtype)
-    #     print(y.shape, y.dtype)
-    #     print("")
-    #     out = model(X1.to(device), X2.to(device), X3.to(device))
-    #     break
+    for X1, X2, X3, y1, y2 in train_set:
+        det, cls = model(X1.to(device), X2.to(device), X3.to(device))
+        print(det.shape)
+        print(cls.shape)
+        break

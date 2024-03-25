@@ -13,9 +13,9 @@ class Plotter:
             if self.model_name is None: return f"{self.save_loc}/{figure_name}.jpg"
             else: return f"{self.save_loc}/{self.model_name}_{figure_name}.jpg"
 
-    def plot_learnining_curves(self, losses, accuracies):
+    def plot_learnining_curves(self, losses, accuracies, figure_name='Learning Curves'):
         f, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
-        t = f.suptitle('Learning Curves', fontsize=12)
+        t = f.suptitle(figure_name, fontsize=12)
         f.subplots_adjust(top=0.85, wspace=0.3)
 
         epoch_list = range(len(losses["train"]))
@@ -34,18 +34,18 @@ class Plotter:
         ax2.set_title('Loss')
         l2 = ax2.legend(loc="best")
         
-        plt.savefig(self.create_file_name("learning_curve"))
+        plt.savefig(self.create_file_name(figure_name))
         plt.clf()
         plt.close()
         return
     
-    def plot_confusion_matrix(self, actuals, predictions, numclasses):
+    def plot_confusion_matrix(self, actuals, predictions, numclasses, figure_name="confusion_matrix"):
         ax= plt.subplot()
         cm = confusion_matrix(actuals, predictions, labels=range(numclasses))
         sns.heatmap(cm, annot=False, fmt='g', ax=ax)
-        ax.set_xlabel('Predicted labels'), ax.set_ylabel('True labels'), ax.set_title('Confusion Matrix')
+        ax.set_xlabel('Predicted labels'), ax.set_ylabel('True labels'), ax.set_title(figure_name)
 
-        plt.savefig(self.create_file_name("confusion_matrix"))
+        plt.savefig(self.create_file_name(figure_name))
         plt.clf()
         plt.close()
         return

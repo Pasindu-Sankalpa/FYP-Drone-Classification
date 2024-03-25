@@ -7,8 +7,8 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 print("Device:", device, "\n")
 
 model = torch.load("/home/gevindu/model_final/Saved models/Final_model_v2.pth", map_location=device).eval()
-dataset = TestDataSet()
-loader = DataLoader(dataset, batch_size=128, shuffle=True)
+dataset = TestDataSet("20240313_T1_19")
+loader = DataLoader(dataset, batch_size=16, shuffle=True)
 
 dataset_sizes = {'test':len(dataset)}
 loaders = {'test': loader}
