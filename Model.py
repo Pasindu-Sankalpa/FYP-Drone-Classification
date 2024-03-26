@@ -172,13 +172,13 @@ class SEResNet2d(nn.Module):
         return self.seresnet(input)
 
 
-class Model(nn.Module):
+class DetectionModel(nn.Module):
     def __init__(
         self,
         base_channels=64,
         num_classes=2,
     ):
-        super(Model, self).__init__()
+        super(DetectionModel, self).__init__()
         self.acoustic_encoder_1 = SEResNet1d(
             base_channels, kernel_size=7, downsample=True
         )
@@ -219,6 +219,46 @@ class ClassificationModel(nn.Module):
         num_classes=4,
     ):
         super(ClassificationModel, self).__init__()
+        self.acoustic_encoder_1 = SEResNet1d(
+            base_channels, kernel_size=7, downsample=True
+        )
+        self.acoustic_encoder_2 = SEResNet1d(
+            base_channels, kernel_size=107, downsample=True
+        )
+        self.rcs_encoder = SEResNet1d(base_channels, kernel_size=7, downsample=False)
+        self.doppler_encoder = SEResNet2d()
+    
+        self.transformer_encoder = nn.TransformerEncoder(
+            nn.TransformerEncoderLayer(d_model=128, nhead=8), num_layers=1
+        )
+        self.classifier = nn.Linear(128, num_classes)
+
+    def forward(self, doppler, rcs, audio):
+        acoustic_encoded = torch.sum(
+            torch.stack(
+                [self.acoustic_encoder_1(audio), self.acoustic_encoder_2(audio)], dim=1
+            ),
+            dim=1,
+        )
+
+        rcs_encoded = self.rcs_encoder(rcs)
+        doppler_encoded = self.doppler_encoder(doppler)
+
+        stacked = self.transformer_encoder(
+                torch.stack(
+                    (acoustic_encoded, rcs_encoded, doppler_encoded), dim=1
+                )
+            )
+
+        return self.classifier(stacked[:, 0, :])
+    
+class CombinedModel(nn.Module):
+    def __init__(
+        self,
+        base_channels=64,
+        num_classes=4,
+    ):
+        super(CombinedModel, self).__init__()
         self.acoustic_encoder_1 = SEResNet1d(
             base_channels, kernel_size=7, downsample=True
         )
