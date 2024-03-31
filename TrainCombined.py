@@ -8,7 +8,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 print("Device:", device, "\n")
 
 arg_dict = {
-    "model name": "Final_model_v3_cls",
+    "model name": "Final_model_v5_comb",
     "epochs": 20,
     "batch_size": 32,
     "lr": 1e-5,
@@ -37,13 +37,17 @@ optimizer = torch.optim.Adam(
 )
 
 model, losses, det_losses, cls_losses, det_accuracies, cls_accuracies = (
-    train_n_evaluate.train_classification_model(
+    train_n_evaluate.train_model(
         model, criterion, optimizer, arg_dict["epochs"], scheduler=None
     )
 )
 
 plotter.plot_learnining_curves(det_losses, det_accuracies, figure_name="Detection learning curves")
 plotter.plot_learnining_curves(cls_losses, cls_accuracies, figure_name="Classification learning curves")
+det_accuracies["train"] = [0 for _ in det_accuracies["train"]]
+det_accuracies["validation"] = [0 for _ in det_accuracies["validation"]]
+plotter.plot_learnining_curves(losses, det_accuracies, figure_name="Learning curves")
+
 actuals, predictions = train_n_evaluate.evaluate_model(model, dataset="test", mode=0)
 plotter.plot_confusion_matrix(actuals, predictions, 2, figure_name="Detection confusion matrix")
 actuals, predictions = train_n_evaluate.evaluate_model(model, dataset="test", mode=1)
@@ -52,6 +56,3 @@ plotter.plot_confusion_matrix(actuals, predictions, 4, figure_name="Classificati
 torch.save(model, f"/home/gevindu/model_final/Saved models/{arg_dict['model name']}.pth")
 print(f"\nSaved to /home/gevindu/model_final/Saved models/{arg_dict['model name']}.pth")
 
-det_accuracies["train"] = [0 for _ in det_accuracies["train"]]
-det_accuracies["validation"] = [0 for _ in det_accuracies["validation"]]
-plotter.plot_learnining_curves(losses, det_accuracies, figure_name="Learning curves")

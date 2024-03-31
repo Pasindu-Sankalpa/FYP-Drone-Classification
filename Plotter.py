@@ -42,7 +42,8 @@ class Plotter:
     def plot_confusion_matrix(self, actuals, predictions, numclasses, figure_name="confusion_matrix"):
         ax= plt.subplot()
         cm = confusion_matrix(actuals, predictions, labels=range(numclasses))
-        sns.heatmap(cm, annot=False, fmt='g', ax=ax)
+        cm = cm/np.sum(cm, axis=1)
+        sns.heatmap(cm, annot=True, fmt=".2f", vmax=1, vmin=0, ax=ax)
         ax.set_xlabel('Predicted labels'), ax.set_ylabel('True labels'), ax.set_title(figure_name)
 
         plt.savefig(self.create_file_name(figure_name))

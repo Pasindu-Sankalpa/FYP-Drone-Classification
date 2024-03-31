@@ -7,7 +7,7 @@ from Plotter import Plotter
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print("Device:", device, "\n")
 
-arg_dict = {"model name": "Final_model_v3_cls",
+arg_dict = {"model name": "Final_model_cls",
             "epochs": 20,
             "batch_size": 32,
             "lr": 1e-5,

@@ -102,7 +102,8 @@ class Train_n_evaluate_detection:
             )
         )
         return actuals, predictions
-    
+
+
 class Train_n_evaluate_classification:
     def __init__(self, loaders, dataset_sizes, device):
         self.loaders = loaders
@@ -205,15 +206,14 @@ class Train_n_evaluate_classification:
         )
         return actuals, predictions
 
+
 class Train_n_evaluate_combined:
     def __init__(self, loaders, dataset_sizes, device):
         self.loaders = loaders
         self.dataset_sizes = dataset_sizes
         self.device = device
 
-    def train_model(
-        self, model, criterion, optimizer, epochs, scheduler, alpha=1.5
-    ):
+    def train_model(self, model, criterion, optimizer, epochs, scheduler, alpha=1/8):
         det_losses = {"train": [], "validation": []}
         det_accuracies = {"train": [], "validation": []}
         cls_losses = {"train": [], "validation": []}
@@ -238,9 +238,7 @@ class Train_n_evaluate_combined:
                 running_cls_corrects = 0.0
                 running_loss = 0.0
 
-                for doppler, rcs, acoustic, det_label, cls_label in tqdm(
-                    self.loaders[phase]
-                ):
+                for doppler, rcs, acoustic, det_label, cls_label in tqdm(self.loaders[phase]):
                     doppler, rcs, acoustic, det_label, cls_label = (
                         doppler.to(self.device),
                         rcs.to(self.device),
@@ -257,16 +255,18 @@ class Train_n_evaluate_combined:
                         det_loss = criterion(outputs[0], det_label.long())
                         cls_loss = criterion(outputs[1], cls_label.long())
 
-                        loss = torch.mean(det_loss + alpha*det_label*cls_loss)
+                        det_loss = torch.mean(det_loss)
+                        cls_loss = alpha*torch.sum(det_label*cls_loss)/torch.sum(det_label)
+                        loss = (det_loss+cls_loss)/2
 
                     if phase == "train":
                         loss.backward()
                         optimizer.step()
 
-                    running_det_loss += torch.mean(det_loss).item() * det_label.size(0)
+                    running_det_loss += det_loss.item() * det_label.size(0)
                     running_det_corrects += torch.sum(det == det_label)
 
-                    running_cls_loss += torch.mean(cls_loss).item() * cls_label.size(0)
+                    running_cls_loss += cls_loss.item() * cls_label.size(0)
                     running_cls_corrects += torch.sum(cls == cls_label)
 
                     running_loss += loss.item() * det_label.size(0)
@@ -299,8 +299,8 @@ class Train_n_evaluate_combined:
                     )
                 )
 
-                if phase == "validation" and epoch_cls_acc > best_acc:
-                    best_acc = epoch_cls_acc
+                if phase == "validation" and epoch_det_acc > best_acc:
+                    best_acc = epoch_det_acc
                     best_model = copy.deepcopy(model.state_dict())
 
             if scheduler:
@@ -312,24 +312,25 @@ class Train_n_evaluate_combined:
         mins = time_elapsed // 60 - hours * 60
         secs = time_elapsed % 60
         print("Training Time {}h {}m {}s".format(hours, mins, secs))
-        print("Best validation accuracy {}".format(best_acc))
+        print("Best validation accuracy for detection {}".format(best_acc))
 
         model.load_state_dict(best_model)
         return model, losses, det_losses, cls_losses, det_accuracies, cls_accuracies
-
 
     def evaluate_model(self, model, dataset, mode):
         """
         mode = 0, detection
         mode = 1, classification
         """
-        mode_name = "Detection" if not mode else "Classification" 
+        mode_name = "Detection" if not mode else "Classification"
         model.eval()
         predictions, actuals = [], []
 
         for doppler, rcs, acoustic, det_label, cls_label in tqdm(self.loaders[dataset]):
-            if mode: label=cls_label 
-            else: label=det_label
+            if mode:
+                label = cls_label
+            else:
+                label = det_label
 
             doppler, rcs, acoustic = (
                 doppler.to(self.device),
@@ -339,7 +340,7 @@ class Train_n_evaluate_combined:
             with torch.no_grad():
                 outputs = model(doppler, rcs, acoustic)
                 _, pred = torch.max(outputs[mode], dim=1)
-                
+
             pred = pred.to("cpu").numpy()
             label = label.numpy()
             predictions.append(pred.reshape(pred.shape[0], 1))

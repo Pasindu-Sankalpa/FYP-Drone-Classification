@@ -1,13 +1,13 @@
 from Libs import *
-from Model import Model
-from DataSet import DataSet
-from Train_n_evaluate import Train_n_evaluate
+from Model import DetectionModel
+from DataSet import DetectionDataSet
+from Train_n_evaluate import Train_n_evaluate_detection
 from Plotter import Plotter
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-print("Device:", device, "\n")
+print("Device:", device)
 
-arg_dict = {"model name": "Final_model_v3",
+arg_dict = {"model name": "Final_model_det",
             "epochs": 20,
             "batch_size": 32,
             "lr": 1e-5,
@@ -15,19 +15,19 @@ arg_dict = {"model name": "Final_model_v3",
             "num_classes": 2
            }
 
-train, validation, test = random_split(DataSet(), lengths=(0.7, 0.25, 0.05))
+train, validation, test = random_split(DetectionDataSet(verbose=True), lengths=(0.7, 0.25, 0.05))
 train_set = DataLoader(train, batch_size=arg_dict['batch_size'], shuffle=True)
 validation_set = DataLoader(validation, batch_size=arg_dict['batch_size'], shuffle=True)
 test_set = DataLoader(test, batch_size=arg_dict['batch_size'], shuffle=True)
 
 dataset_sizes = {'train':len(train), 'validation':len(validation), 'test':len(test)}
 loaders = {'train':train_set, 'validation':validation_set, 'test': test_set}
-# print(dataset_sizes)
+print(dataset_sizes)
 
-train_n_evaluate = Train_n_evaluate(loaders, dataset_sizes, device)
+train_n_evaluate = Train_n_evaluate_detection(loaders, dataset_sizes, device)
 plotter = Plotter(model_name=arg_dict['model name'])
 
-model = Model().to(device)
+model = DetectionModel().to(device)
 
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr = arg_dict["lr"], weight_decay=arg_dict["weight_decay"])

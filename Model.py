@@ -231,7 +231,8 @@ class ClassificationModel(nn.Module):
         self.transformer_encoder = nn.TransformerEncoder(
             nn.TransformerEncoderLayer(d_model=128, nhead=8), num_layers=1
         )
-        self.classifier = nn.Linear(128, num_classes)
+        self.classifier = nn.Sequential(nn.Linear(128, 32),
+                                        nn.Linear(32, num_classes))
 
     def forward(self, doppler, rcs, audio):
         acoustic_encoded = torch.sum(
@@ -272,7 +273,9 @@ class CombinedModel(nn.Module):
             nn.TransformerEncoderLayer(d_model=128, nhead=8), num_layers=1
         )
         self.detector = nn.Linear(128, 2)
-        self.classifier = nn.Linear(128, num_classes)
+        self.classifier = nn.Sequential(nn.Linear(128, 32),
+                                        nn.Linear(32, num_classes))
+        
 
     def forward(self, doppler, rcs, audio):
         acoustic_encoded = torch.sum(
