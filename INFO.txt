@@ -8,4 +8,4 @@ Improvements:
 
 
 Terminal command:
-    nohup python [script] > [file_name].log &
+    nohup python [script] > [file_name].log &.
