@@ -213,7 +213,7 @@ class Train_n_evaluate_combined:
         self.dataset_sizes = dataset_sizes
         self.device = device
 
-    def train_model(self, model, criterion, optimizer, epochs, scheduler, alpha=1/8):
+    def train_model(self, model, det_criterion, cls_criterion, optimizer, epochs, scheduler, alpha=0.5):
         det_losses = {"train": [], "validation": []}
         det_accuracies = {"train": [], "validation": []}
         cls_losses = {"train": [], "validation": []}
@@ -222,21 +222,25 @@ class Train_n_evaluate_combined:
 
         since = time.time()
         best_model = copy.deepcopy(model.state_dict())
-        best_acc = 0.0
+        best_det_acc = 0.0
+        best_cls_acc = 0.0
 
         for epoch in range(epochs):
             for phase in ["train", "validation"]:
                 if phase == "train":
                     model.train()
                     print("Epoch: {}/{}".format(epoch + 1, epochs))
+                    print("Training")
                 elif phase == "validation":
                     model.eval()
+                    print("Validating")
 
                 running_det_loss = 0.0
                 running_det_corrects = 0.0
                 running_cls_loss = 0.0
                 running_cls_corrects = 0.0
                 running_loss = 0.0
+                num_drones = 0.0
 
                 for doppler, rcs, acoustic, det_label, cls_label in tqdm(self.loaders[phase]):
                     doppler, rcs, acoustic, det_label, cls_label = (
@@ -252,11 +256,10 @@ class Train_n_evaluate_combined:
                         outputs = model(doppler, rcs, acoustic)
                         _, det = torch.max(outputs[0], dim=1)
                         _, cls = torch.max(outputs[1], dim=1)
-                        det_loss = criterion(outputs[0], det_label.long())
-                        cls_loss = criterion(outputs[1], cls_label.long())
+                        det_loss = det_criterion(outputs[0], det_label.long())
+                        cls_loss = cls_criterion(outputs[1], cls_label.long())
 
-                        det_loss = torch.mean(det_loss)
-                        cls_loss = alpha*torch.sum(det_label*cls_loss)/torch.sum(det_label)
+                        cls_loss = alpha*torch.sum(cls_loss)/torch.sum(det_label) ### can add item()
                         loss = (det_loss+cls_loss)/2
 
                     if phase == "train":
@@ -266,10 +269,12 @@ class Train_n_evaluate_combined:
                     running_det_loss += det_loss.item() * det_label.size(0)
                     running_det_corrects += torch.sum(det == det_label)
 
-                    running_cls_loss += cls_loss.item() * cls_label.size(0)
+                    running_cls_loss += cls_loss.item() * torch.sum(det_label)
                     running_cls_corrects += torch.sum(cls == cls_label)
 
-                    running_loss += loss.item() * det_label.size(0)
+                    running_loss += loss.item() * det_label.size(0)  
+
+                    num_drones+=torch.sum(det_label)
 
                 epoch_det_loss = running_det_loss / self.dataset_sizes[phase]
                 epoch_det_acc = (
@@ -278,19 +283,18 @@ class Train_n_evaluate_combined:
                 det_losses[phase].append(epoch_det_loss)
                 det_accuracies[phase].append(epoch_det_acc.to("cpu"))
 
-                epoch_cls_loss = running_cls_loss / self.dataset_sizes[phase]
+                epoch_cls_loss = running_cls_loss / num_drones  
                 epoch_cls_acc = (
                     running_cls_corrects.float() / self.dataset_sizes[phase] * 100
                 )
-                cls_losses[phase].append(epoch_cls_loss)
+                cls_losses[phase].append(epoch_cls_loss.to("cpu"))
                 cls_accuracies[phase].append(epoch_cls_acc.to("cpu"))
 
-                epoch_loss = running_loss / self.dataset_sizes[phase]
+                epoch_loss = running_loss / self.dataset_sizes[phase]  
                 losses[phase].append(epoch_loss)
 
                 print(
-                    "{} - multi task loss: {}\ndetection loss: {}, accuracy: {}\nclassification loss: {}, accuracy: {}".format(
-                        phase,
+                    "Multi task loss: {}\nDetection loss: {}, accuracy: {}\nClassification loss: {}, accuracy: {}".format(
                         epoch_loss,
                         epoch_det_loss,
                         epoch_det_acc,
@@ -299,9 +303,11 @@ class Train_n_evaluate_combined:
                     )
                 )
 
-                if phase == "validation" and epoch_det_acc > best_acc:
-                    best_acc = epoch_det_acc
+                if phase == "validation" and epoch_det_acc >= best_det_acc and epoch_cls_acc >= best_cls_acc:
+                    best_det_acc = epoch_det_acc
+                    best_cls_acc = epoch_cls_acc
                     best_model = copy.deepcopy(model.state_dict())
+                    print("Model saved to disk")
 
             if scheduler:
                 scheduler.step()
@@ -311,8 +317,8 @@ class Train_n_evaluate_combined:
         hours = time_elapsed // 3600
         mins = time_elapsed // 60 - hours * 60
         secs = time_elapsed % 60
-        print("Training Time {}h {}m {}s".format(hours, mins, secs))
-        print("Best validation accuracy for detection {}".format(best_acc))
+        print("Training Time: {}h {}m {}s".format(hours, mins, secs))
+        print("Best validation accuracy: detection {}, classification {}".format(best_det_acc, best_cls_acc))
 
         model.load_state_dict(best_model)
         return model, losses, det_losses, cls_losses, det_accuracies, cls_accuracies

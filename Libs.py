@@ -19,3 +19,7 @@ import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader, random_split
 
 import warnings; warnings.filterwarnings('ignore')
+
+torch.manual_seed(0)
+random.seed(0)
+np.random.seed(0)

@@ -277,7 +277,7 @@ class TestDataSet(Dataset):
         data = data - (data >= np.power(2, 15)) * np.power(2, 16)
         return (data[:, :, 0] + 1j * data[:, :, 1]).astype(np.complex64)
 
-    def __readAudio(self, file_name: str) -> np.ndarray:
+    def __readAudio(self, file_name: str, frame) -> np.ndarray:
         """Read the audio file and resample, trim.
 
         Args:
@@ -285,9 +285,14 @@ class TestDataSet(Dataset):
         Returns:
             (#nSamples, ) shaped acoustic signal
         """
+        frameRate = 25
+        startTime = int(frame/frameRate*1000)
         droneSound, _ = librosa.load(file_name, sr=16000)
-        index = np.random.randint(0, droneSound.shape[0] - 8000)
-        droneSound = droneSound[index : index + 8000]
+        if startTime + 8000 < droneSound.shape[0]:
+            droneSound = droneSound[startTime : startTime + 8000]
+        else:
+            index = np.random.randint(0, droneSound.shape[0] - 8000)
+            droneSound = droneSound[index : index + 8000]
         return (droneSound - np.mean(droneSound)) / np.std(droneSound)
 
     def __dopplerProcess(self, beat_signal: np.ndarray) -> np.ndarray:
@@ -348,7 +353,7 @@ class TestDataSet(Dataset):
             torch.tensor(self.__dopplerProcess(beat_signal), dtype=torch.float),
             torch.tensor(self.__rcsProcess(beat_signal), dtype=torch.float),
             torch.tensor(
-                self.__readAudio(f"{self.datasetDir}/{self.dataHolder[idx][0]}.wav"),
+                self.__readAudio(f"{self.datasetDir}/{self.dataHolder[idx][0]}.wav",frame),
                 dtype=torch.float,
             ),
             torch.tensor(self.dataHolder[idx][2], dtype=torch.float),

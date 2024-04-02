@@ -15,7 +15,7 @@ arg_dict = {"model name": "Final_model_cls_v2",
             "num_classes": 4
            }
 
-train, validation, test = random_split(ClassificationDataSet(), lengths=(0.7, 0.25, 0.05))
+train, validation, test = random_split(ClassificationDataSet(verbose=True), lengths=(0.7, 0.25, 0.05))
 train_set = DataLoader(train, batch_size=arg_dict['batch_size'], shuffle=True)
 validation_set = DataLoader(validation, batch_size=arg_dict['batch_size'], shuffle=True)
 test_set = DataLoader(test, batch_size=arg_dict['batch_size'], shuffle=True)

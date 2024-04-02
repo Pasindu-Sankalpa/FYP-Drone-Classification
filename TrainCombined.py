@@ -8,8 +8,8 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 print("Device:", device, "\n")
 
 arg_dict = {
-    "model name": "Final_model_v5_comb",
-    "epochs": 20,
+    "model name": "Final_model_comb",
+    "epochs": 60,
     "batch_size": 32,
     "lr": 1e-5,
     "weight_decay": 0.4
@@ -24,21 +24,21 @@ test_set = DataLoader(test, batch_size=arg_dict["batch_size"], shuffle=True)
 
 dataset_sizes = {"train": len(train), "validation": len(validation), "test": len(test)}
 loaders = {"train": train_set, "validation": validation_set, "test": test_set}
-# print(dataset_sizes)
 
 train_n_evaluate = Train_n_evaluate_combined(loaders, dataset_sizes, device)
 plotter = Plotter(model_name=arg_dict["model name"])
 
 model = CombinedModel().to(device)
 
-criterion = nn.CrossEntropyLoss(reduction="none")
+det_criterion = nn.CrossEntropyLoss()
+cls_criterion = nn.CrossEntropyLoss(reduction="none", weight=torch.tensor((0, 1, 1, 1), dtype=torch.float).to(device))
 optimizer = torch.optim.Adam(
     model.parameters(), lr=arg_dict["lr"], weight_decay=arg_dict["weight_decay"]
 )
 
 model, losses, det_losses, cls_losses, det_accuracies, cls_accuracies = (
     train_n_evaluate.train_model(
-        model, criterion, optimizer, arg_dict["epochs"], scheduler=None
+        model, det_criterion, cls_criterion, optimizer, arg_dict["epochs"], scheduler=None
     )
 )
 
@@ -46,8 +46,8 @@ plotter.plot_learnining_curves(det_losses, det_accuracies, figure_name="Detectio
 plotter.plot_learnining_curves(cls_losses, cls_accuracies, figure_name="Classification learning curves")
 det_accuracies["train"] = [0 for _ in det_accuracies["train"]]
 det_accuracies["validation"] = [0 for _ in det_accuracies["validation"]]
-plotter.plot_learnining_curves(losses, det_accuracies, figure_name="Learning curves")
-
+plotter.plot_learnining_curves(losses, det_accuracies, figure_name="learning curves")
+ 
 actuals, predictions = train_n_evaluate.evaluate_model(model, dataset="test", mode=0)
 plotter.plot_confusion_matrix(actuals, predictions, 2, figure_name="Detection confusion matrix")
 actuals, predictions = train_n_evaluate.evaluate_model(model, dataset="test", mode=1)

@@ -294,7 +294,7 @@ class CombinedModel(nn.Module):
                 )
             )
 
-        return self.detector(stacked[:, 0, :]), self.classifier(stacked[:, 1, :])
+        return self.detector(stacked[:, 0, :]), self.classifier(stacked[:, 0, :])
 
 
 if __name__ == "__main__":
