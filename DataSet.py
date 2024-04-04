@@ -1,5 +1,6 @@
 from Libs import *
 
+
 class DetectionDataSet(Dataset):
     def __init__(
         self,
@@ -112,9 +113,9 @@ class DetectionDataSet(Dataset):
             (#nSamples, ) shaped acoustic signal
         """
         frameRate = 25
-        startTime = int(frame/frameRate*1000)
+        startTime = int(frame / frameRate * 1000)
         droneSound, _ = librosa.load(file_name, sr=16000)
-        if startTime+8000 <= droneSound.shape[0]:
+        if startTime + 8000 <= droneSound.shape[0]:
             droneSound = droneSound[startTime : startTime + 8000]
         else:
             index = np.random.randint(0, droneSound.shape[0] - 8000)
@@ -179,7 +180,10 @@ class DetectionDataSet(Dataset):
             torch.tensor(self.__dopplerProcess(beat_signal), dtype=torch.float),
             torch.tensor(self.__rcsProcess(beat_signal), dtype=torch.float),
             torch.tensor(
-                self.__readAudio(f"{self.datasetDir}/{self.dataHolder[idx][0]}.wav",  frame=self.dataHolder[idx][1]),
+                self.__readAudio(
+                    f"{self.datasetDir}/{self.dataHolder[idx][0]}.wav",
+                    frame=self.dataHolder[idx][1],
+                ),
                 dtype=torch.float,
             ),
             torch.tensor(self.dataHolder[idx][2], dtype=torch.float),
@@ -206,7 +210,15 @@ class TestDataSet(Dataset):
         self.filter = filter
         self.b, self.a = butter(2, 0.015, btype="highpass", analog=False)
 
-        classLabel2detIndex = {"NO": 0, "OO": 0, "T1": 1, "T2": 1, "T3": 1, "T4": 1}
+        classLabel2detIndex = {
+            "NO": 0,
+            "OO": 0,
+            "T1": 1,
+            "T2": 1,
+            "T3": 1,
+            "T4": 1,
+            "T5": 1,
+        }
 
         self.dataHolder = []
 
@@ -259,9 +271,9 @@ class TestDataSet(Dataset):
             (#nSamples, ) shaped acoustic signal
         """
         frameRate = 25
-        startTime = int(frame/frameRate*1000)
+        startTime = int(frame / frameRate * 1000)
         droneSound, _ = librosa.load(file_name, sr=16000)
-        if startTime+8000 <= droneSound.shape[0]:
+        if startTime + 8000 <= droneSound.shape[0]:
             droneSound = droneSound[startTime : startTime + 8000]
         else:
             index = np.random.randint(0, droneSound.shape[0] - 8000)
@@ -326,7 +338,10 @@ class TestDataSet(Dataset):
             torch.tensor(self.__dopplerProcess(beat_signal), dtype=torch.float),
             torch.tensor(self.__rcsProcess(beat_signal), dtype=torch.float),
             torch.tensor(
-                self.__readAudio(f"{self.datasetDir}/{self.dataHolder[idx][0]}.wav", frame=self.dataHolder[idx][1]),
+                self.__readAudio(
+                    f"{self.datasetDir}/{self.dataHolder[idx][0]}.wav",
+                    frame=self.dataHolder[idx][1],
+                ),
                 dtype=torch.float,
             ),
             torch.tensor(self.dataHolder[idx][2], dtype=torch.float),
@@ -449,9 +464,9 @@ class CombinedDataSet(Dataset):
             (#nSamples, ) shaped acoustic signal
         """
         frameRate = 25
-        startTime = int(frame/frameRate*1000)
+        startTime = int(frame / frameRate * 1000)
         droneSound, _ = librosa.load(file_name, sr=16000)
-        if startTime+8000 <= droneSound.shape[0]:
+        if startTime + 8000 <= droneSound.shape[0]:
             droneSound = droneSound[startTime : startTime + 8000]
         else:
             index = np.random.randint(0, droneSound.shape[0] - 8000)
@@ -516,7 +531,10 @@ class CombinedDataSet(Dataset):
             torch.tensor(self.__dopplerProcess(beat_signal), dtype=torch.float),
             torch.tensor(self.__rcsProcess(beat_signal), dtype=torch.float),
             torch.tensor(
-                self.__readAudio(f"{self.datasetDir}/{self.dataHolder[idx][0]}.wav", frame=self.dataHolder[idx][1]),
+                self.__readAudio(
+                    f"{self.datasetDir}/{self.dataHolder[idx][0]}.wav",
+                    frame=self.dataHolder[idx][1],
+                ),
                 dtype=torch.float,
             ),
             torch.tensor(self.dataHolder[idx][2], dtype=torch.float),
@@ -606,9 +624,9 @@ class ClassificationDataSet(Dataset):
             (#nSamples, ) shaped acoustic signal
         """
         frameRate = 25
-        startTime = int(frame/frameRate*1000)
+        startTime = int(frame / frameRate * 1000)
         droneSound, _ = librosa.load(file_name, sr=16000)
-        if startTime+8000 <= droneSound.shape[0]:
+        if startTime + 8000 <= droneSound.shape[0]:
             droneSound = droneSound[startTime : startTime + 8000]
         else:
             index = np.random.randint(0, droneSound.shape[0] - 8000)
@@ -673,7 +691,10 @@ class ClassificationDataSet(Dataset):
             torch.tensor(self.__dopplerProcess(beat_signal), dtype=torch.float),
             torch.tensor(self.__rcsProcess(beat_signal), dtype=torch.float),
             torch.tensor(
-                self.__readAudio(f"{self.datasetDir}/{self.dataHolder[idx][0]}.wav", frame=self.dataHolder[idx][1]),
+                self.__readAudio(
+                    f"{self.datasetDir}/{self.dataHolder[idx][0]}.wav",
+                    frame=self.dataHolder[idx][1],
+                ),
                 dtype=torch.float,
             ),
             torch.tensor(self.dataHolder[idx][2], dtype=torch.float),

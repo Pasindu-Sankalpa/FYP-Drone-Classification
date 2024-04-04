@@ -1,12 +1,14 @@
 from Libs import *
-from Model import DetectionModel, ClassificationModel
+from Model import DetectionModel, ClassificationModel, CombinedModel
 from DataSet import TestDataSet
 from statistics import mode
 
-def eval_sep():
+def eval_sep(drone_names):
     det = []
     cls = []
     d_type = []
+
+    s = nn.Softmax(dim=1)
 
     det_model = torch.load("/home/gevindu/model_final/Saved models/Final_model_det.pth", map_location=device).eval()
     cls_model = torch.load("/home/gevindu/model_final/Saved models/Final_model_cls_v2.pth", map_location=device).eval()
@@ -38,7 +40,7 @@ def eval_sep():
 
     print(string)
 
-def eval_comb():
+def eval_comb(drone_names):
     model = torch.load("/home/gevindu/model_final/Saved models/Final_model_comb.pth", map_location=device).eval()
 
     for doppler, rcs, acoustic, labels in loader:
@@ -53,23 +55,20 @@ def eval_comb():
             _, det_pred = torch.max(det_out, dim=1)
             _, cls_pred = torch.max(cls_out, dim=1)
 
-            print(det_pred, cls_pred)
-            print(s(cls_out))
-
-            
+            if not torch.mode(det_pred).values and not torch.mode(cls_pred).values: print("No drone identified.")
+            if not torch.mode(det_pred).values and torch.mode(cls_pred).values: print("A drone identified, can not classified to an known type.")
+            if torch.mode(det_pred).values: print(f"A drone identified, possible drone type is {drone_names[torch.mode(cls_pred).values.item()]}")
+             
 
 if __name__ == "__main__":
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    # print("Device:", device, "\n")
 
-    loader = DataLoader(TestDataSet("20240313_T3_17"), batch_size=16, shuffle=True)
+    loader = DataLoader(TestDataSet("20240313_NO_16"), batch_size=16, shuffle=True)
 
     drone_names = {1: "DJI Matrice 300 RTK",
-                2: "DJI Phanthom-4 Pro Plus",
-                3: "Mavic 2 Enterprise Dual"}
+                    2: "DJI Phanthom-4 Pro Plus",
+                    3: "Mavic 2 Enterprise Dual"}
 
-    s = nn.Softmax(dim=1)
+    # eval_sep(drone_names)
 
-    # eval_sep()
-
-    eval_comb()
+    eval_comb(drone_names)
