@@ -9,6 +9,7 @@ import numpy as np
 from tqdm import tqdm
 import seaborn as sns
 from typing import Tuple
+from scipy import signal
 import matplotlib.pyplot as plt
 from scipy.signal import butter, filtfilt
 

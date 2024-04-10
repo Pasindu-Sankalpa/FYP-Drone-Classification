@@ -189,6 +189,64 @@ class DetectionDataSet(Dataset):
             torch.tensor(self.dataHolder[idx][2], dtype=torch.float),
         )
 
+class MatchAudio:
+    def __init__(
+        self,
+        sampling_rate=16000,
+        base_audio_file="20240404_T5_03.wav",
+        cut_off=2000,
+        filter_order=4,
+        coeff_main=0.5,
+        coeff_base=1,
+    ) -> None:
+        self.sampling_rate = sampling_rate
+        self.base_audio = librosa.load(base_audio_file, sr=self.sampling_rate)[0]
+        self.cut_off = cut_off
+        self.order = filter_order
+        self.coeff_main = coeff_main
+        self.coeff_base = coeff_base
+
+    def __low_pass(self, audio):
+        b, a = signal.butter(
+            self.order, self.cut_off / (self.sampling_rate * 0.5), "lowpass", False
+        )
+        return signal.filtfilt(b, a, audio)
+
+    def __high_pass(self, audio):
+        b, a = signal.butter(
+            self.order, self.cut_off / (self.sampling_rate * 0.5), "highpass", False
+        )
+        return signal.filtfilt(b, a, audio)
+
+    def __make_mix_signal(self, main, low_passed):
+        len_main = len(main)
+        len_low_passed = len(low_passed)
+        if len_main == len_low_passed:
+            return low_passed
+        elif len_main < len_low_passed:
+            return low_passed[:len_main]
+        else:
+            mix = np.zeros_like(main)
+            for i in range(len_main // len_low_passed):
+                mix[i * len_low_passed : (i + 1) * len_low_passed] = low_passed
+            mix[(i + 1) * len_low_passed :] = low_passed[
+                : len_main - (i + 1) * len_low_passed
+            ]
+            return mix
+
+    def match(self, audio_name):
+        main_data, _ = librosa.load(audio_name, sr=self.sampling_rate)
+        low_pass_data = self.__low_pass(self.base_audio)
+        high_pass_data = self.__high_pass(main_data)
+
+        low_pass_data_reshape = self.__make_mix_signal(
+            high_pass_data, low_pass_data
+        )
+
+        return (
+            self.coeff_main * high_pass_data
+            + self.coeff_base * low_pass_data_reshape
+        )
 
 class TestDataSet(Dataset):
     def __init__(
@@ -209,6 +267,7 @@ class TestDataSet(Dataset):
         self.datasetDir = datasetDir
         self.filter = filter
         self.b, self.a = butter(2, 0.015, btype="highpass", analog=False)
+        self.matcher = MatchAudio(base_audio_file="/home/gevindu/model_final/Airforce Data/20240404_T5_03.wav")
 
         classLabel2detIndex = {
             "NO": 0,
@@ -272,7 +331,8 @@ class TestDataSet(Dataset):
         """
         frameRate = 25
         startTime = int(frame / frameRate * 1000)
-        droneSound, _ = librosa.load(file_name, sr=16000)
+        droneSound = self.matcher.match(file_name)
+        # droneSound, _ = librosa.load(file_name, sr=16000)
         if startTime + 8000 <= droneSound.shape[0]:
             droneSound = droneSound[startTime : startTime + 8000]
         else:
