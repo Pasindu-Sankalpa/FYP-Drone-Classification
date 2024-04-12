@@ -1,19 +1,16 @@
 ## import
 import os
-import cv2
-import time
 import numpy as np
 from scipy.signal import butter,filtfilt
-import sys
-import random
 
 ## https://qiita.com/harmegiddo/items/8a7e1b4b3a899a9e1f0c
 
 def cfar(inputImg):
     # fields
+    global ALPHA
     GUARD_CELLS = 5
     BG_CELLS = 10
-    ALPHA = 20
+    ALPHA = 15
     CFAR_UNITS = 1 + (GUARD_CELLS * 2) + (BG_CELLS * 2)
     HALF_CFAR_UNITS = int(CFAR_UNITS/2) + 1
 
@@ -38,9 +35,9 @@ def cfar(inputImg):
     return estimateImg
 
 bin_file_dir = input("Bin file path: ")
-num_samples = int(input("Number of samples per chirp: ")) # 256
-num_chirps = int(input("Number of chirps per frame: ")) # 128
-num_frames = int(input("Number of frames: ")) # 256
+num_samples = 256 # int(input("Number of samples per chirp: "))
+num_chirps = 128 # int(input("Number of chirps per frame: "))
+num_frames = 256 # int(input("Number of frames: "))
 
 ## Filter
 b, a = butter(2, 0.03, btype='highpass', analog=False)
@@ -61,20 +58,16 @@ doppler_map = np.empty_like(doppler)
 for frame in range(doppler.shape[0]):
     doppler_map[frame, :, :num_chirps//2], doppler_map[frame, :, num_chirps//2:] = doppler[frame, :, num_chirps//2:], doppler[frame, :, :num_chirps//2]
 
-cfar_dopper_map = []
+cfar_dopper_map = np.zeros([num_frames, num_samples, num_chirps])
 
 for i in range(num_frames):
     print(i, end =" ")
-    cfar_dopper_map.append(cfar(doppler_map[i]))
-    print("Done CFAR")
+    cfar_dopper_map[i] = cfar(doppler_map[i])
+    print("Done")
 
 print("Done CFAR")
 
-window_name = 'Range Doppler'
-cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
+file_name = os.path.basename(bin_file_dir)
+np.save('cfar_'+file_name+'_'+str(ALPHA)+'.npy', cfar_dopper_map)
 
-for i in range(128):
-    cv2.imshow(window_name, cv2.applyColorMap(cfar_dopper_map[i], cv2.COLORMAP_JET))
-    time.sleep(1)
-    if cv2.waitKey(25) & 0xFF == ord('q'): break
-cv2.destroyAllWindows()
+print("Array saved")

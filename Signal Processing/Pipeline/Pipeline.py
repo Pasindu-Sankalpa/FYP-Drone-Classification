@@ -8,7 +8,7 @@ from matlab import engine
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
-data_folder = input("Radar data folder to work on: ") # Ex: 'Pipeline\PostProc_22_5'
+data_folder = input("Radar data folder to work on: ") # Ex: 'PostProc_22_5'
 file_dir = os.path.join(os.getcwd(), data_folder)
 
 ## Check if .mat files are available, if not create them using .bin file
