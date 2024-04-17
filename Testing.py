@@ -63,7 +63,7 @@ def eval_comb(drone_names):
 if __name__ == "__main__":
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    loader = DataLoader(TestDataSet(""), batch_size=16, shuffle=True)
+    loader = DataLoader(TestDataSet("20240313_T4_15"), batch_size=16, shuffle=True)
 
     drone_names = {1: "DJI Matrice 300 RTK",
                     2: "DJI Phanthom-4 Pro Plus",

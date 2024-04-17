@@ -267,7 +267,7 @@ class TestDataSet(Dataset):
         self.datasetDir = datasetDir
         self.filter = filter
         self.b, self.a = butter(2, 0.015, btype="highpass", analog=False)
-        self.matcher = MatchAudio(base_audio_file="/home/gevindu/model_final/Airforce Data/20240404_T5_03.wav")
+        self.matcher = MatchAudio(base_audio_file="/home/gevindu/model_final/Airforce Data/20240313_NO_01.wav")
 
         classLabel2detIndex = {
             "NO": 0,

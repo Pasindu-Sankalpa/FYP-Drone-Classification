@@ -289,8 +289,7 @@ class CombinedModel(nn.Module):
 
         return self.detector(stacked[:, 0, :]), self.classifier(stacked[:, 0, :])
 
-
-if __name__ == "__main__":
+def main():
     from DataSet import ClassificationDataSet
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -309,3 +308,6 @@ if __name__ == "__main__":
         print(det.shape)
         print(cls.shape)
         break
+
+if __name__ == "__main__":
+    main()
