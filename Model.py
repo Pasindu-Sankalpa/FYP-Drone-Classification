@@ -93,6 +93,9 @@ class SEResNet1d(nn.Module):
             self.seresnet = nn.Sequential(
                 UnsqueezeLayer(dim=(1,)),
                 nn.Conv1d(1, base_channels, kernel_size=1),
+                nn.BatchNorm1d(base_channels),
+                nn.ReLU(),
+                nn.MaxPool1d(kernel_size=3, padding=1, stride=2),
                 SEResBlock1d(base_channels, kernel_size=kernel_size),
                 SEResBlock1d(base_channels, kernel_size=kernel_size),
                 SEResBlock1d(base_channels, upsample=True, kernel_size=kernel_size),
@@ -267,7 +270,7 @@ class CombinedModel(nn.Module):
         self.doppler_encoder = SEResNet2d()
 
         self.transformer_encoder = nn.TransformerEncoder(
-            nn.TransformerEncoderLayer(d_model=128, nhead=8), num_layers=1
+            nn.TransformerEncoderLayer(d_model=128, nhead=8, batch_first=True), num_layers=1
         )
         self.detector = nn.Linear(128, 2)
         self.classifier = nn.Sequential(nn.Linear(128, 32), nn.Linear(32, num_classes))
@@ -289,6 +292,7 @@ class CombinedModel(nn.Module):
 
         return self.detector(stacked[:, 0, :]), self.classifier(stacked[:, 0, :])
 
+
 def main():
     from DataSet import ClassificationDataSet
 
@@ -308,6 +312,7 @@ def main():
         print(det.shape)
         print(cls.shape)
         break
+
 
 if __name__ == "__main__":
     main()

@@ -8,8 +8,8 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 print("Device:", device, "\n")
 
 arg_dict = {
-    "model name": "Final_model_comb",
-    "epochs": 60,
+    "model name": "Final_model_comb_v3",
+    "epochs": 30,
     "batch_size": 32,
     "lr": 1e-5,
     "weight_decay": 0.4

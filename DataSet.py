@@ -194,17 +194,17 @@ class MatchAudio:
         self,
         sampling_rate=16000,
         base_audio_file="20240404_T5_03.wav",
-        cut_off=2000,
+        cut_off=1500, #2000
         filter_order=4,
         coeff_main=0.5,
         coeff_base=1,
     ) -> None:
         self.sampling_rate = sampling_rate
-        self.base_audio = librosa.load(base_audio_file, sr=self.sampling_rate)[0]
         self.cut_off = cut_off
         self.order = filter_order
         self.coeff_main = coeff_main
         self.coeff_base = coeff_base
+        self.low_pass_data = self.__low_pass(librosa.load(base_audio_file, sr=self.sampling_rate)[0])
 
     def __low_pass(self, audio):
         b, a = signal.butter(
@@ -236,11 +236,11 @@ class MatchAudio:
 
     def match(self, audio_name):
         main_data, _ = librosa.load(audio_name, sr=self.sampling_rate)
-        low_pass_data = self.__low_pass(self.base_audio)
+        
         high_pass_data = self.__high_pass(main_data)
 
         low_pass_data_reshape = self.__make_mix_signal(
-            high_pass_data, low_pass_data
+            high_pass_data, self.low_pass_data
         )
 
         return (
@@ -331,8 +331,10 @@ class TestDataSet(Dataset):
         """
         frameRate = 25
         startTime = int(frame / frameRate * 1000)
+
         droneSound = self.matcher.match(file_name)
         # droneSound, _ = librosa.load(file_name, sr=16000)
+
         if startTime + 8000 <= droneSound.shape[0]:
             droneSound = droneSound[startTime : startTime + 8000]
         else:
