@@ -416,7 +416,7 @@ class CombinedDataSet(Dataset):
         fileDir: os.PathLike = "Data Collection - Collection state.csv",
         datasetDir: os.PathLike = "/home/gevindu/model_final/Airforce Data",
         numSplits: int = 128,
-        filter: bool = False,
+        filter: bool = True,
         verbose: bool = False,
     ):
         """Class to access the dataset collected from airforce.
@@ -430,7 +430,7 @@ class CombinedDataSet(Dataset):
         """
         self.datasetDir = datasetDir
         self.filter = filter
-        self.b, self.a = butter(2, 0.015, btype="highpass", analog=False)
+        self.b, self.a = butter(2, 0.03, btype="highpass", analog=False)
 
         classLabel2detIndex = {"NO": 0, "OO": 0, "T1": 1, "T2": 1, "T3": 1}
         classLabel2clsIndex = {"NO": 0, "OO": 0, "T1": 1, "T2": 2, "T3": 3}
@@ -508,14 +508,113 @@ class CombinedDataSet(Dataset):
         Returns:
             (#chirps, #samples) shaped radar matrix at the index "frame"
         """
+        def drone_distance(drone_data, frame_no):
+            num_samples = 256
+            num_chirps = 128
+            num_frames = drone_data.shape[0] // (128 * 256 * 8)
+            drone_data = drone_data.reshape((num_frames, num_chirps, num_samples, 8))[:, :, :, [0, 4]]
+            drone_data = drone_data - (drone_data>=np.power(2, 15))*np.power(2, 16)
+            beat_signal = (drone_data[:, :, :, 0] + 1j*drone_data[:, :, :, 1]).astype(np.complex64)
+            radar_range = np.fft.fft(beat_signal, axis=2)
+            radar_range = np.rot90(radar_range, 1, axes=(1, 2))
+            rangedoppler = np.abs(np.fft.fft(radar_range))
+            rangedoppler[:,:,0] = 0
+            rangedoppler = np.uint8((rangedoppler-np.min(rangedoppler))/(np.max(rangedoppler)-np.min(rangedoppler))*255)
+            rangedoppler_map = np.empty_like(rangedoppler)
+            for frame in range(rangedoppler.shape[0]):
+                rangedoppler_map[frame, :, :num_chirps//2], rangedoppler_map[frame, :, num_chirps//2:] = rangedoppler[frame, :, num_chirps//2:], rangedoppler[frame, :, :num_chirps//2]  
+            max_values = {}
+            for i in range(num_frames):
+                max_index = np.unravel_index(np.argmax(rangedoppler_map[i]), rangedoppler_map[i].shape)
+                max_values[i] = max_index
+            def check_next(cur_ind,check_ind, win_size):
+                if np.abs(max_values[cur_ind][0] - max_values[check_ind][0]) > win_size or np.abs(max_values[cur_ind][1] - max_values[check_ind][1]) > win_size:
+                    return True
+                else:
+                    return False
+            win_size = 5
+            change = np.zeros(256)
+            for i in range(255):
+                if check_next(i,i+1,win_size):
+                    change[i] = 1
+                    
+            def consecutive_zeros_indices(arr, min_length=5):
+                zero_indices = np.where(arr == 0)[0]
+                consecutive_zeros = np.split(zero_indices, np.where(np.diff(zero_indices) != 1)[0] + 1)
+                consecutive_zeros_filtered = [seq for seq in consecutive_zeros if len(seq) >= min_length]
+                return consecutive_zeros_filtered
+            indices = consecutive_zeros_indices(change)
+            for i in range(len(indices)):
+                indices[i] = list(indices[i])
+                
+            def track_drone(cur_ind,check_ind,win_size):
+                if check_next(cur_ind,check_ind,win_size):
+                    for i in range(1,4):
+                        if not check_next(cur_ind,check_ind+i,win_size):
+                            return True,check_ind+i
+                    else:
+                        return False ,check_ind+4
+                else:
+                    return True,check_ind
+            drone_pos = np.zeros((256,256,128))
+            indices_copy = []
+            for i in range(len(indices)):
+                a = indices[i].copy()
+                indices_copy.append(a)
+
+            for i in range(len(indices)):    
+                if i ==0:
+                    cur_ind = indices[i][0]
+                    for p in range(indices[i][0],0,-1):
+                        if p-1 >= 0:
+                            if not check_next(cur_ind,p-1,4):
+                                cur_ind = p-1
+                                indices_copy[i].insert(0,cur_ind)
+                                drone_pos[cur_ind][max_values[cur_ind][0]][max_values[cur_ind][1]] = 255
+                        else:
+                            break
+                for k in indices[i]:
+                    drone_pos[k][max_values[cur_ind][0]][max_values[cur_ind][1]] = 255
+                j = indices[i][-1]
+                proceed = True
+                if j+2 < 255:
+                    cur_ind = j+1
+                    check_ind = j+2
+                else:
+                    break 
+                while proceed:
+                    if cur_ind < 250 and check_ind < 250:
+                        status , pos = track_drone(cur_ind,check_ind,4)
+                    else:
+                        proceed =False          
+                    if status == False and any(pos in sublist for sublist in indices):
+                        proceed = False
+                    elif status == False:
+                        check_ind = pos
+                    elif status == True and any(pos in sublist for sublist in indices):
+                        proceed = False
+                    elif status == True:
+                        if pos+1<255:
+                            cur_ind = pos
+                            indices_copy[i].append(cur_ind)
+                            drone_pos[cur_ind][max_values[cur_ind][0]][max_values[cur_ind][1]] = 255
+                            check_ind = cur_ind + 1
+                        else:
+                            proceed = False
+            if  any(frame_no in sublist for sublist in indices_copy):
+                return 0.19*(255 - max_values[frame_no][0])
+            else:
+                return 0.19*255
 
         data = np.fromfile(file_name, dtype=np.uint16)
+        
+        distance = drone_distance(data.copy(),frame)
         data = data.reshape((data.shape[0] // (128 * 256 * 8), 128, 256, 8))[
             :, :, :, [channel, channel + 4]
         ][frame]
 
         data = data - (data >= np.power(2, 15)) * np.power(2, 16)
-        return (data[:, :, 0] + 1j * data[:, :, 1]).astype(np.complex64)
+        return (data[:, :, 0] + 1j * data[:, :, 1]).astype(np.complex64) ,distance
 
     def __readAudio(self, file_name: str, frame) -> np.ndarray:
         """Read the audio file and resample, trim.
@@ -563,7 +662,7 @@ class CombinedDataSet(Dataset):
             * 255
         )
 
-    def __rcsProcess(self, beat_signal: np.ndarray) -> np.ndarray:
+    def __rcsProcess(self, beat_signal: np.ndarray, distance) -> np.ndarray:
         """Get a radar matrix as the input and process the RCS. Additioanlly, remove the zero doppler component.
 
         Args:
@@ -578,20 +677,20 @@ class CombinedDataSet(Dataset):
             radarRange = filtfilt(self.b, self.a, radarRange)
 
         beat_signal = np.fft.ifft(np.rot90(radarRange, 3))
-        return np.mean(np.abs(beat_signal) ** 2, axis=1)
+        return np.mean(np.abs(beat_signal) ** 2, axis=1)/(distance**4)
 
     def __len__(self):
         return len(self.dataHolder)
 
     def __getitem__(self, idx):
-        beat_signal = self.__readBin(
+        beat_signal, distance = self.__readBin(
             f"{self.datasetDir}/{self.dataHolder[idx][0]}.bin",
-            frame=self.dataHolder[idx][1],
+            frame=self.dataHolder[idx][1]
         )
 
         return (
             torch.tensor(self.__dopplerProcess(beat_signal), dtype=torch.float),
-            torch.tensor(self.__rcsProcess(beat_signal), dtype=torch.float),
+            torch.tensor(self.__rcsProcess(beat_signal, distance), dtype=torch.float),
             torch.tensor(
                 self.__readAudio(
                     f"{self.datasetDir}/{self.dataHolder[idx][0]}.wav",
