@@ -105,10 +105,10 @@ class App(customtkinter.CTk):
         self.config_3_entry.insert(0, "256")
         self.config_3_entry.grid(row=3, column=1, padx=(20, 40), pady=(10, 10), sticky="w")
 
-        self.config_4_label = customtkinter.CTkLabel(self.home_frame, text="Frame rate:", font=customtkinter.CTkFont(size=15), text_color=("gray10", "gray90"), anchor="e")
+        self.config_4_label = customtkinter.CTkLabel(self.home_frame, text="Frame rate (Hz):", font=customtkinter.CTkFont(size=15), text_color=("gray10", "gray90"), anchor="e")
         self.config_4_label.grid(row=4, column=0, padx=(20, 20), pady=(10, 10), sticky="nsew")
         self.config_4_entry = customtkinter.CTkEntry(self.home_frame)
-        self.config_4_entry.insert(0, "25Hz")
+        self.config_4_entry.insert(0, "25")
         self.config_4_entry.grid(row=4, column=1, padx=(20, 40), pady=(10, 10), sticky="w")
 
         ## home frame - file paths entry
@@ -151,7 +151,7 @@ class App(customtkinter.CTk):
 
         self.drone_1_label = customtkinter.CTkLabel(self.info_frame, text="DJI Matrice 300 RTK", image=self.drone_1_image, compound="top", font=customtkinter.CTkFont(size=15))
         self.drone_1_label.grid(row=1, column=0, padx=20, pady=20)
-        self.drone_2_label = customtkinter.CTkLabel(self.info_frame, text="DJI Phanthom 4 Pro Plus", image=self.drone_2_image, compound="top", font=customtkinter.CTkFont(size=15))
+        self.drone_2_label = customtkinter.CTkLabel(self.info_frame, text="DJI Phantom 4 Pro Plus", image=self.drone_2_image, compound="top", font=customtkinter.CTkFont(size=15))
         self.drone_2_label.grid(row=1, column=1, padx=20, pady=20)
         self.drone_3_label = customtkinter.CTkLabel(self.info_frame, text="Mavic 2 Enterprise Dual", image=self.drone_3_image, compound="top", font=customtkinter.CTkFont(size=15))
         self.drone_3_label.grid(row=2, column=0, padx=20, pady=20)
