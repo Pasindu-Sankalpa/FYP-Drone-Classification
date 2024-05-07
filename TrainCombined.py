@@ -8,15 +8,15 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 print("Device:", device, "\n")
 
 arg_dict = {
-    "model name": "Final_model_comb_v3",
+    "model name": "Final_model_comb_v4",
     "epochs": 30,
-    "batch_size": 32,
+    "batch_size": 64,
     "lr": 1e-5,
     "weight_decay": 0.4
 }
 
 train, validation, test = random_split(
-    CombinedDataSet(), lengths=(0.7, 0.25, 0.05)
+    CombinedDataSet(fileDir="/home/gevindu/model_final/FYP-Drone-Classification/Data Collection - Collection state - New.csv", verbose=True), lengths=(0.7, 0.25, 0.05)
 )
 train_set = DataLoader(train, batch_size=arg_dict["batch_size"], shuffle=True)
 validation_set = DataLoader(validation, batch_size=arg_dict["batch_size"], shuffle=True)
@@ -25,13 +25,13 @@ test_set = DataLoader(test, batch_size=arg_dict["batch_size"], shuffle=True)
 dataset_sizes = {"train": len(train), "validation": len(validation), "test": len(test)}
 loaders = {"train": train_set, "validation": validation_set, "test": test_set}
 
-train_n_evaluate = Train_n_evaluate_combined(loaders, dataset_sizes, device)
+train_n_evaluate = Train_n_evaluate_combined(arg_dict['model name'], loaders, dataset_sizes, device)
 plotter = Plotter(model_name=arg_dict["model name"])
 
 model = CombinedModel().to(device)
 
 det_criterion = nn.CrossEntropyLoss()
-cls_criterion = nn.CrossEntropyLoss(reduction="none", weight=torch.tensor((0, 1, 1, 1), dtype=torch.float).to(device))
+cls_criterion = nn.CrossEntropyLoss(reduction="none", weight=torch.tensor((0, 1, 1, 1, 1), dtype=torch.float).to(device))
 optimizer = torch.optim.Adam(
     model.parameters(), lr=arg_dict["lr"], weight_decay=arg_dict["weight_decay"]
 )
@@ -51,8 +51,8 @@ plotter.plot_learnining_curves(losses, det_accuracies, figure_name="learning cur
 actuals, predictions = train_n_evaluate.evaluate_model(model, dataset="test", mode=0)
 plotter.plot_confusion_matrix(actuals, predictions, 2, figure_name="Detection confusion matrix")
 actuals, predictions = train_n_evaluate.evaluate_model(model, dataset="test", mode=1)
-plotter.plot_confusion_matrix(actuals, predictions, 4, figure_name="Classification confusion matrix")
+plotter.plot_confusion_matrix(actuals, predictions, 5, figure_name="Classification confusion matrix")
 
-torch.save(model, f"/home/gevindu/model_final/Saved models/{arg_dict['model name']}.pth")
-print(f"\nSaved to /home/gevindu/model_final/Saved models/{arg_dict['model name']}.pth")
+# torch.save(model, f"/home/gevindu/model_final/Saved models/{arg_dict['model name']}.pth")
+# print(f"\nSaved to /home/gevindu/model_final/Saved models/{arg_dict['model name']}.pth")
 

@@ -194,7 +194,7 @@ class MatchAudio:
         self,
         sampling_rate=16000,
         base_audio_file="20240404_T5_03.wav",
-        cut_off=1500, #2000
+        cut_off=2500, #2000
         filter_order=4,
         coeff_main=0.5,
         coeff_base=1,
@@ -277,6 +277,7 @@ class TestDataSet(Dataset):
             "T3": 1,
             "T4": 1,
             "T5": 1,
+            "T6": 1,  
         }
 
         self.dataHolder = []
@@ -432,8 +433,8 @@ class CombinedDataSet(Dataset):
         self.filter = filter
         self.b, self.a = butter(2, 0.03, btype="highpass", analog=False)
 
-        classLabel2detIndex = {"NO": 0, "OO": 0, "T1": 1, "T2": 1, "T3": 1}
-        classLabel2clsIndex = {"NO": 0, "OO": 0, "T1": 1, "T2": 2, "T3": 3}
+        classLabel2detIndex = {"NO": 0, "OO": 0, "T1": 1, "T2": 1, "T3": 1, "T6": 1}
+        classLabel2clsIndex = {"NO": 0, "OO": 0, "T1": 1, "T2": 2, "T3": 3, "T6": 4}
         classCount = {0: 0, 1: np.inf}
 
         while not (
@@ -455,6 +456,17 @@ class CombinedDataSet(Dataset):
                             )
                         )
                         classCount[classLabel2detIndex[dataPoint[1][-5:-3]]] += 1
+                        # addding again if the label is 0
+                        if not classLabel2detIndex[dataPoint[1][-5:-3]]:
+                            self.dataHolder.append(
+                                (
+                                    dataPoint[1],
+                                    split,
+                                    classLabel2detIndex[dataPoint[1][-5:-3]],
+                                    classLabel2clsIndex[dataPoint[1][-5:-3]],
+                                )
+                            )
+                            classCount[classLabel2detIndex[dataPoint[1][-5:-3]]] += 1
                         # addding again if the label is 0
                         if not classLabel2detIndex[dataPoint[1][-5:-3]]:
                             self.dataHolder.append(
@@ -508,10 +520,12 @@ class CombinedDataSet(Dataset):
         Returns:
             (#chirps, #samples) shaped radar matrix at the index "frame"
         """
+        # print(file_name)
         def drone_distance(drone_data, frame_no):
             num_samples = 256
             num_chirps = 128
             num_frames = drone_data.shape[0] // (128 * 256 * 8)
+            #print("shape",num_frames)
             drone_data = drone_data.reshape((num_frames, num_chirps, num_samples, 8))[:, :, :, [0, 4]]
             drone_data = drone_data - (drone_data>=np.power(2, 15))*np.power(2, 16)
             beat_signal = (drone_data[:, :, :, 0] + 1j*drone_data[:, :, :, 1]).astype(np.complex64)
@@ -533,8 +547,8 @@ class CombinedDataSet(Dataset):
                 else:
                     return False
             win_size = 5
-            change = np.zeros(256)
-            for i in range(255):
+            change = np.zeros(num_frames)
+            for i in range(num_frames-1):
                 if check_next(i,i+1,win_size):
                     change[i] = 1
                     
@@ -556,7 +570,7 @@ class CombinedDataSet(Dataset):
                         return False ,check_ind+4
                 else:
                     return True,check_ind
-            drone_pos = np.zeros((256,256,128))
+            drone_pos = np.zeros((num_frames,256,128))
             indices_copy = []
             for i in range(len(indices)):
                 a = indices[i].copy()
@@ -577,16 +591,16 @@ class CombinedDataSet(Dataset):
                     drone_pos[k][max_values[cur_ind][0]][max_values[cur_ind][1]] = 255
                 j = indices[i][-1]
                 proceed = True
-                if j+2 < 255:
+                if j+2 < num_frames-1:
                     cur_ind = j+1
                     check_ind = j+2
                 else:
                     break 
                 while proceed:
-                    if cur_ind < 250 and check_ind < 250:
+                    if cur_ind < num_frames-6 and check_ind < num_frames-6:
                         status , pos = track_drone(cur_ind,check_ind,4)
                     else:
-                        proceed =False          
+                        break        
                     if status == False and any(pos in sublist for sublist in indices):
                         proceed = False
                     elif status == False:
@@ -594,7 +608,7 @@ class CombinedDataSet(Dataset):
                     elif status == True and any(pos in sublist for sublist in indices):
                         proceed = False
                     elif status == True:
-                        if pos+1<255:
+                        if pos+1<num_frames-1:
                             cur_ind = pos
                             indices_copy[i].append(cur_ind)
                             drone_pos[cur_ind][max_values[cur_ind][0]][max_values[cur_ind][1]] = 255
@@ -677,7 +691,7 @@ class CombinedDataSet(Dataset):
             radarRange = filtfilt(self.b, self.a, radarRange)
 
         beat_signal = np.fft.ifft(np.rot90(radarRange, 3))
-        return np.mean(np.abs(beat_signal) ** 2, axis=1)/(distance**4)
+        return np.mean(np.abs(beat_signal) ** 2, axis=1)*(distance**4)
 
     def __len__(self):
         return len(self.dataHolder)

@@ -11,4 +11,3 @@ Terminal command:
     nohup python [script] >> [file_name].log &.
 
 V2 - batch_first = True
-V3 - seperate embeddings

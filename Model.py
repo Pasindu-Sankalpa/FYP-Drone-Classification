@@ -257,7 +257,7 @@ class CombinedModel(nn.Module):
     def __init__(
         self,
         base_channels=64,
-        num_classes=4,
+        num_classes=5,
     ):
         super(CombinedModel, self).__init__()
         self.acoustic_encoder_1 = SEResNet1d(

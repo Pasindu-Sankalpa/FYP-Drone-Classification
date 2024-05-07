@@ -208,7 +208,8 @@ class Train_n_evaluate_classification:
 
 
 class Train_n_evaluate_combined:
-    def __init__(self, loaders, dataset_sizes, device):
+    def __init__(self, model_name, loaders, dataset_sizes, device):
+        self.model_name = model_name
         self.loaders = loaders
         self.dataset_sizes = dataset_sizes
         self.device = device
@@ -307,7 +308,8 @@ class Train_n_evaluate_combined:
                     best_det_acc = epoch_det_acc
                     best_cls_acc = epoch_cls_acc
                     best_model = copy.deepcopy(model.state_dict())
-                    print("Model saved to disk")
+                if phase == "validation":
+                    torch.save(model, f"/home/gevindu/model_final/Saved models/{self.model_name}_epoch_{epoch+1}.pth")
 
             if scheduler:
                 scheduler.step()
