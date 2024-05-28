@@ -1,13 +1,4 @@
 Training: https://docs.google.com/spreadsheets/d/1uR4T62CNPJCzFIPJ4fcTEMSAwFmEKvNMasiXAosE_JY/edit?usp=sharing
 
-Improvements:
-    1. Audio sampled at random.
-    2. No filtering is implemented.
-    3. RCS is not normalized.
-    4. Radar frames sampled continuously, not skip.
-
-
 Terminal command:
     nohup python [script] >> [file_name].log &.
-
-V2 - batch_first = True
