@@ -1,4 +1,4 @@
 Training: https://docs.google.com/spreadsheets/d/1uR4T62CNPJCzFIPJ4fcTEMSAwFmEKvNMasiXAosE_JY/edit?usp=sharing
 
 Terminal command:
-    nohup python [script] >> [file_name].log &.
+    nohup python [script] >> [file_name].log &

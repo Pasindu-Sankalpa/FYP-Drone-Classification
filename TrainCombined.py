@@ -8,7 +8,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 print("Device:", device, "\n")
 
 arg_dict = {
-    "model name": "Final_model_comb_v4",
+    "model name": "Ablation_no_audio",
     "epochs": 30,
     "batch_size": 64,
     "lr": 1e-5,
@@ -16,7 +16,7 @@ arg_dict = {
 }
 
 train, validation, test = random_split(
-    CombinedDataSet(fileDir="/home/gevindu/model_final/FYP-Drone-Classification/Data Collection - Collection state - New.csv", verbose=True), lengths=(0.7, 0.25, 0.05)
+    CombinedDataSet(fileDir="/home/gevindu/model_final/FYP-Drone-Classification/Data Collection - Collection state - New.csv", verbose=False), lengths=(0.7, 0.25, 0.05)
 )
 train_set = DataLoader(train, batch_size=arg_dict["batch_size"], shuffle=True)
 validation_set = DataLoader(validation, batch_size=arg_dict["batch_size"], shuffle=True)

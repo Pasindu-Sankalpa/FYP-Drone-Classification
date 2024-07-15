@@ -260,12 +260,12 @@ class CombinedModel(nn.Module):
         num_classes=5,
     ):
         super(CombinedModel, self).__init__()
-        self.acoustic_encoder_1 = SEResNet1d(
-            base_channels, kernel_size=7, downsample=True
-        )
-        self.acoustic_encoder_2 = SEResNet1d(
-            base_channels, kernel_size=107, downsample=True
-        )
+        # self.acoustic_encoder_1 = SEResNet1d(
+        #     base_channels, kernel_size=7, downsample=True
+        # )
+        # self.acoustic_encoder_2 = SEResNet1d(
+        #     base_channels, kernel_size=107, downsample=True
+        # )
         self.rcs_encoder = SEResNet1d(base_channels, kernel_size=7, downsample=False)
         self.doppler_encoder = SEResNet2d()
 
@@ -276,35 +276,35 @@ class CombinedModel(nn.Module):
         self.classifier = nn.Sequential(nn.Linear(128, 32), nn.Linear(32, num_classes))
 
     def forward(self, doppler, rcs, audio):
-        acoustic_encoded = torch.sum(
-            torch.stack(
-                [self.acoustic_encoder_1(audio), self.acoustic_encoder_2(audio)], dim=1
-            ),
-            dim=1,
-        )
+        # acoustic_encoded = torch.sum(
+        #     torch.stack(
+        #         [self.acoustic_encoder_1(audio), self.acoustic_encoder_2(audio)], dim=1
+        #     ),
+        #     dim=1,
+        # )
 
         rcs_encoded = self.rcs_encoder(rcs)
         doppler_encoded = self.doppler_encoder(doppler)
 
         stacked = self.transformer_encoder(
-            torch.stack((acoustic_encoded, rcs_encoded, doppler_encoded), dim=1)
+            torch.stack((rcs_encoded, doppler_encoded), dim=1)
         )
 
         return self.detector(stacked[:, 0, :]), self.classifier(stacked[:, 0, :])
 
 
 def main():
-    from DataSet import ClassificationDataSet
+    from DataSet import CombinedDataSet
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print("Device:", device, "\n")
 
-    model = ClassificationModel().to(device)
+    model = CombinedModel().to(device)
 
     # pytorch_total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     # print(pytorch_total_params)
 
-    dataset = ClassificationDataSet()
+    dataset = CombinedDataSet()
     train_set = DataLoader(dataset, batch_size=8, shuffle=True)
 
     for X1, X2, X3, y1, y2 in train_set:
