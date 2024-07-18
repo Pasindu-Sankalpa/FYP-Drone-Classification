@@ -243,18 +243,16 @@ class Train_n_evaluate_combined:
                 running_loss = 0.0
                 num_drones = 0.0
 
-                for doppler, rcs, acoustic, det_label, cls_label in tqdm(self.loaders[phase]):
-                    doppler, rcs, acoustic, det_label, cls_label = (
-                        doppler.to(self.device),
+                for rcs, det_label, cls_label in tqdm(self.loaders[phase]):
+                    rcs, det_label, cls_label = (
                         rcs.to(self.device),
-                        acoustic.to(self.device),
                         det_label.to(self.device),
                         cls_label.to(self.device),
                     )
                     optimizer.zero_grad()
 
                     with torch.set_grad_enabled(phase == "train"):
-                        outputs = model(doppler, rcs, acoustic)
+                        outputs = model(None, rcs, None)
                         _, det = torch.max(outputs[0], dim=1)
                         _, cls = torch.max(outputs[1], dim=1)
                         det_loss = det_criterion(outputs[0], det_label.long())
@@ -334,19 +332,16 @@ class Train_n_evaluate_combined:
         model.eval()
         predictions, actuals = [], []
 
-        for doppler, rcs, acoustic, det_label, cls_label in tqdm(self.loaders[dataset]):
+        for rcs, det_label, cls_label in tqdm(self.loaders[dataset]):
             if mode:
                 label = cls_label
             else:
                 label = det_label
 
-            doppler, rcs, acoustic = (
-                doppler.to(self.device),
-                rcs.to(self.device),
-                acoustic.to(self.device),
-            )
+            rcs = rcs.to(self.device)
+            
             with torch.no_grad():
-                outputs = model(doppler, rcs, acoustic)
+                outputs = model(None, rcs, None)
                 _, pred = torch.max(outputs[mode], dim=1)
 
             pred = pred.to("cpu").numpy()

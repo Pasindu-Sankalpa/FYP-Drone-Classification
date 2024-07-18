@@ -8,7 +8,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 print("Device:", device, "\n")
 
 arg_dict = {
-    "model name": "Ablation_no_audio",
+    "model name": "Ablation_rcs_only",
     "epochs": 30,
     "batch_size": 64,
     "lr": 1e-5,

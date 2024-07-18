@@ -267,10 +267,11 @@ class CombinedModel(nn.Module):
         #     base_channels, kernel_size=107, downsample=True
         # )
         self.rcs_encoder = SEResNet1d(base_channels, kernel_size=7, downsample=False)
-        self.doppler_encoder = SEResNet2d()
+        # self.doppler_encoder = SEResNet2d()
 
         self.transformer_encoder = nn.TransformerEncoder(
-            nn.TransformerEncoderLayer(d_model=128, nhead=8, batch_first=True), num_layers=1
+            nn.TransformerEncoderLayer(d_model=128, nhead=8, batch_first=True),
+            num_layers=1,
         )
         self.detector = nn.Linear(128, 2)
         self.classifier = nn.Sequential(nn.Linear(128, 32), nn.Linear(32, num_classes))
@@ -284,13 +285,11 @@ class CombinedModel(nn.Module):
         # )
 
         rcs_encoded = self.rcs_encoder(rcs)
-        doppler_encoded = self.doppler_encoder(doppler)
+        # doppler_encoded = self.doppler_encoder(doppler)
 
-        stacked = self.transformer_encoder(
-            torch.stack((rcs_encoded, doppler_encoded), dim=1)
-        )
+        stacked = self.transformer_encoder(rcs_encoded)
 
-        return self.detector(stacked[:, 0, :]), self.classifier(stacked[:, 0, :])
+        return self.detector(stacked), self.classifier(stacked)
 
 
 def main():
@@ -307,8 +306,8 @@ def main():
     dataset = CombinedDataSet()
     train_set = DataLoader(dataset, batch_size=8, shuffle=True)
 
-    for X1, X2, X3, y1, y2 in train_set:
-        det, cls = model(X1.to(device), X2.to(device), X3.to(device))
+    for X, y1, y2 in train_set:
+        det, cls = model(None, X.to(device), None)
         print(det.shape)
         print(cls.shape)
         break
