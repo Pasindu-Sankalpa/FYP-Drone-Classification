@@ -1,6 +1,5 @@
 import os, glob
 from typing import Literal
-from abc import ABC, abstractmethod
 
 from PIL import Image
 
@@ -9,10 +8,16 @@ import torchvision.transforms as transform
 from torch.utils.data import Dataset, DataLoader
 
 
-class DroneData(Dataset, ABC):
+class DroneData(Dataset):
     num_data_points = 9830
 
-    def __init__(self, data_category: Literal["mel", "rangeDoppler", "all"]) -> None:
+    def __init__(self, data_category: Literal["mel", "rangeDoppler"]) -> None:
+        """Initialize the dataset for drone detection and classification
+
+        Args:
+            data_category: what to load, mel spectrograms or range Doppler maps
+        
+        """
         self._data_category = data_category
         self._data_dir = (
             f"/home/gevindu/model_final/Airforce Data processed/{data_category}"
@@ -59,7 +64,7 @@ class DroneData(Dataset, ABC):
 
 if __name__ == "__main__":
 
-    for img, det, cls in DataLoader(DroneData("rangeDoppler"), batch_size=4, shuffle=True):
+    for img, det, cls in DataLoader(DroneData("rangeDoppler"), batch_size=256, shuffle=True):
         print(img.shape)
         print(det.shape)
         print(cls.shape)
