@@ -1,1 +1,0 @@
-Recorded data will be copied to this directory.
