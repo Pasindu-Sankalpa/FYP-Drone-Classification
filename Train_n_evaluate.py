@@ -243,8 +243,9 @@ class Train_n_evaluate_combined:
                 running_loss = 0.0
                 num_drones = 0.0
 
-                for rcs, det_label, cls_label in tqdm(self.loaders[phase]):
-                    rcs, det_label, cls_label = (
+                for doppler, rcs, det_label, cls_label in tqdm(self.loaders[phase]):
+                    doppler, rcs, det_label, cls_label = (
+                        doppler.to(self.device),
                         rcs.to(self.device),
                         det_label.to(self.device),
                         cls_label.to(self.device),
@@ -252,9 +253,10 @@ class Train_n_evaluate_combined:
                     optimizer.zero_grad()
 
                     with torch.set_grad_enabled(phase == "train"):
-                        outputs = model(None, rcs, None)
+                        outputs = model(doppler, rcs, None)
                         _, det = torch.max(outputs[0], dim=1)
                         _, cls = torch.max(outputs[1], dim=1)
+
                         det_loss = det_criterion(outputs[0], det_label.long())
                         cls_loss = cls_criterion(outputs[1], cls_label.long())
 
@@ -306,8 +308,8 @@ class Train_n_evaluate_combined:
                     best_det_acc = epoch_det_acc
                     best_cls_acc = epoch_cls_acc
                     best_model = copy.deepcopy(model.state_dict())
-                if phase == "validation":
-                    torch.save(model, f"/home/gevindu/model_final/Saved models/{self.model_name}_epoch_{epoch+1}.pth")
+                # if phase == "validation":
+                #     torch.save(model, f"/home/gevindu/model_final/Saved models/{self.model_name}_epoch_{epoch+1}.pth")
 
             if scheduler:
                 scheduler.step()
@@ -332,16 +334,17 @@ class Train_n_evaluate_combined:
         model.eval()
         predictions, actuals = [], []
 
-        for rcs, det_label, cls_label in tqdm(self.loaders[dataset]):
+        for doppler, rcs, det_label, cls_label in tqdm(self.loaders[dataset]):
             if mode:
                 label = cls_label
             else:
                 label = det_label
 
+            doppler = doppler.to(self.device)
             rcs = rcs.to(self.device)
-            
+           
             with torch.no_grad():
-                outputs = model(None, rcs, None)
+                outputs = model(doppler, rcs, None)
                 _, pred = torch.max(outputs[mode], dim=1)
 
             pred = pred.to("cpu").numpy()

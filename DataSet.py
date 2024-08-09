@@ -703,7 +703,7 @@ class CombinedDataSet(Dataset):
         )
 
         return (
-            # torch.tensor(self.__dopplerProcess(beat_signal), dtype=torch.float),
+            torch.tensor(self.__dopplerProcess(beat_signal), dtype=torch.float),
             torch.tensor(self.__rcsProcess(beat_signal, distance), dtype=torch.float),
             # torch.tensor(
             #     self.__readAudio(
