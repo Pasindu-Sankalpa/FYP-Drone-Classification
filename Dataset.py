@@ -20,7 +20,7 @@ class DroneData(Dataset):
         """
         self._data_category = data_category
         self._data_dir = (
-            f"/home/gevindu/model_final/Airforce Data processed/{data_category}"
+            f"/home/gevindu/Final_work/Airforce Data processed/{data_category}"
         )
         self._transform = transform.Compose([transform.Resize((224, 224)),
                                              transform.ToTensor(),
