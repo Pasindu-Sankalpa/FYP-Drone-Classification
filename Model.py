@@ -266,7 +266,7 @@ class CombinedModel(nn.Module):
         # self.acoustic_encoder_2 = SEResNet1d(
         #     base_channels, kernel_size=107, downsample=True
         # )
-        self.rcs_encoder = SEResNet1d(base_channels, kernel_size=7, downsample=False)
+        # self.rcs_encoder = SEResNet1d(base_channels, kernel_size=7, downsample=False)
         self.doppler_encoder = SEResNet2d()
 
         self.transformer_encoder = nn.TransformerEncoder(
@@ -284,14 +284,12 @@ class CombinedModel(nn.Module):
         #     dim=1,
         # )
 
-        rcs_encoded = self.rcs_encoder(rcs)
+        # rcs_encoded = self.rcs_encoder(rcs)
         doppler_encoded = self.doppler_encoder(doppler)
 
-        stacked = self.transformer_encoder(
-            torch.stack((rcs_encoded, doppler_encoded), dim=1)
-        )
+        stacked = self.transformer_encoder(doppler_encoded)
 
-        return self.detector(stacked[:, 0, :]), self.classifier(stacked[:, 0, :])
+        return self.detector(stacked), self.classifier(stacked)
 
 
 def main():

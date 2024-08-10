@@ -622,7 +622,8 @@ class CombinedDataSet(Dataset):
 
         data = np.fromfile(file_name, dtype=np.uint16)
         
-        distance = drone_distance(data.copy(),frame)
+        # distance = drone_distance(data.copy(),frame)
+        distance = None
         data = data.reshape((data.shape[0] // (128 * 256 * 8), 128, 256, 8))[
             :, :, :, [channel, channel + 4]
         ][frame]
@@ -704,7 +705,7 @@ class CombinedDataSet(Dataset):
 
         return (
             torch.tensor(self.__dopplerProcess(beat_signal), dtype=torch.float),
-            torch.tensor(self.__rcsProcess(beat_signal, distance), dtype=torch.float),
+            # torch.tensor(self.__rcsProcess(beat_signal, distance), dtype=torch.float),
             # torch.tensor(
             #     self.__readAudio(
             #         f"{self.datasetDir}/{self.dataHolder[idx][0]}.wav",

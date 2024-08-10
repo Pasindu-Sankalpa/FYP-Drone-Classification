@@ -7,9 +7,10 @@ from Plotter import Plotter
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print("Device:", device, "\n")
 
+#change here
 arg_dict = {
-    "model name": "Ablation_no_audio_v2",
-    "epochs": 30,
+    "model name": "Ablation_range_Doppler_only_v2",
+    "epochs": 1,
     "batch_size": 64,
     "lr": 1e-5,
     "weight_decay": 0.4
