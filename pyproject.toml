@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fyp"
+version = "0.1.0" 
+description = "Final year project codes."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+  { name = "Gevindu", email = "gevindu1@gmail.com" }
+]
+keywords = ["drone", "fyp", "classification", "deep learning", "detection", "ML", "AI"]
