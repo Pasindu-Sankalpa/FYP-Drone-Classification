@@ -81,7 +81,11 @@ class DroneData(Dataset):
 
     def __getitem__(self, idx) -> tuple[torch.tensor, int, int]:
         self._set_file_name(self._datasets[self._mode][idx])
-        return self._load_image, self._det_label, self._cls_label
+        
+        if self._mode == "detection":
+            return self._load_image, self._det_label
+        elif self._mode == "classification":
+            return self._load_image, self._cls_label
 
 
 def load_images(

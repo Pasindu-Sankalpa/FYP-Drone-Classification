@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -9,6 +10,9 @@ class Plotter:
     def __init__(self, save_loc=None, model_name=None):
         self.save_loc = save_loc
         self.model_name = model_name
+
+        if save_loc is not None and not os.path.isdir(save_loc):
+            os.mkdir(save_loc)
 
     def create_file_name(self, figure_name):
         if self.save_loc is None:
@@ -22,7 +26,7 @@ class Plotter:
             else:
                 return f"{self.save_loc}/{self.model_name}_{figure_name}.jpg"
 
-    def plot_learnining_curves(self, losses, accuracies, figure_name="Learning Curves"):
+    def plot_learnining_curves(self, losses, accuracies, figure_name="learning_curves"):
         f, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
         _ = f.suptitle(figure_name, fontsize=12)
         f.subplots_adjust(top=0.85, wspace=0.3)

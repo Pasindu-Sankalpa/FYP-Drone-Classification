@@ -1,6 +1,9 @@
+import os
 import copy
 import time
 from tqdm import tqdm
+from typing import Literal
+from dataclasses import dataclass
 
 import numpy as np
 import torch
@@ -8,19 +11,46 @@ import torch
 from sklearn.metrics import accuracy_score, f1_score
 
 
+@dataclass
+class Params:
+    model_prefix: str
+    data_category: Literal["mel", "rangeDoppler"]
+    mode: Literal["detection", "classification"]
+    lengths: tuple[float] = (0.7, 0.25, 0.05)
+    epochs: int = 1
+    batch_size: int = 64
+    learning_rate: float = 2e-5
+    weight_decay: float = 0.2
+    momentum: float = 0.75
+    save_location: os.PathLike = None
+    save_weights: bool = False
+
+    @property
+    def model_name(self):
+        cat = "audio" if self.data_category == "mel" else "radar"
+        return f"{self.model_prefix}_{cat}_{self.mode}"
+
+    @property
+    def num_classes(self):
+        if self.mode == "detection":
+            return 2
+        elif self.mode == "classification":
+            return 5
+
+
 class Pipeline:
-    def __init__(self, model_name, loaders, dataset_sizes, device):
-        self.model_name = model_name
+    def __init__(self, loaders, dataset_sizes, device):
         self.loaders = loaders
         self.dataset_sizes = dataset_sizes
         self.device = device
 
-    def train_model(self, model, criterion, optimizer, epochs, scheduler):
+    def train_model(self, model, criterion, optimizer, epochs, scheduler=None):
         losses = {"train": [], "validation": []}
         accuracies = {"train": [], "validation": []}
 
         best_acc = 0.0
         since = time.time()
+        model = model.to(self.device)
         best_model = copy.deepcopy(model.state_dict())
 
         for epoch in range(epochs):
@@ -76,17 +106,18 @@ class Pipeline:
         print(f"Best validation accuracy: {best_acc}")
 
         model.load_state_dict(best_model)
+        self.model = model
         return model, losses, accuracies
 
-    def evaluate_model(self, model, dataset):
-        model.eval()
+    def evaluate_model(self, dataset):
+        self.model.eval()
         predictions, actuals = [], []
 
         for X, label in tqdm(self.loaders[dataset]):
             X = X.to(self.device)
 
             with torch.no_grad():
-                outputs = model(X)
+                outputs = self.model(X)
                 _, pred = torch.max(outputs, dim=1)
 
             pred = pred.to("cpu").numpy()
