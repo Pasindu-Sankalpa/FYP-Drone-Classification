@@ -7,12 +7,9 @@ from sklearn.metrics import confusion_matrix
 
 
 class Plotter:
-    def __init__(self, save_loc=None, model_name=None):
-        self.save_loc = save_loc
-        self.model_name = model_name
-
-        if save_loc is not None and not os.path.isdir(save_loc):
-            os.mkdir(save_loc)
+    def __init__(self, params):
+        self.save_loc = params.save_location
+        self.model_name = params.model_name
 
     def create_file_name(self, figure_name):
         if self.save_loc is None:

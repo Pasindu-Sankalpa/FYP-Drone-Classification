@@ -8,6 +8,8 @@ import torch
 import torchvision.transforms as transform
 from torch.utils.data import Dataset, DataLoader, random_split
 
+from .TrainEval import Params
+
 
 class DroneData(Dataset):
     num_data_points = 9830
@@ -81,38 +83,30 @@ class DroneData(Dataset):
 
     def __getitem__(self, idx) -> tuple[torch.tensor, int, int]:
         self._set_file_name(self._datasets[self._mode][idx])
-        
+
         if self._mode == "detection":
             return self._load_image, self._det_label
         elif self._mode == "classification":
             return self._load_image, self._cls_label
 
 
-def load_images(
-    data_category: Literal["mel", "rangeDoppler"],
-    mode: Literal["detection", "classification"],
-    batch_size: int = 128,
-    lengths: tuple[float] = (0.7, 0.25, 0.05),
-) -> tuple[dict[str, DataLoader], dict[str, int]]:
+def load_images(params: Params) -> tuple[dict[str, DataLoader], dict[str, int]]:
     """load the dataset as splits
 
     Args:
-        data_category: what to load, mel spectrograms or range Doppler maps
-        mode: detection or classification
-        batch_size: batch_size
-        lengths: percentages for the splits, should be summed to 1
-
+        params: Parameter data class object
+    
     Returns:
         tuple of loaders dictionary and split lengths dictionary
 
     """
     train, validation, test = random_split(
-        DroneData(data_category, mode), lengths=lengths
+        DroneData(params.data_category, params.mode), lengths=params.lengths
     )
 
-    train_set = DataLoader(train, batch_size=batch_size, shuffle=True)
-    validation_set = DataLoader(validation, batch_size=batch_size, shuffle=True)
-    test_set = DataLoader(test, batch_size=batch_size, shuffle=True)
+    train_set = DataLoader(train, batch_size=params.batch_size, shuffle=True)
+    validation_set = DataLoader(validation, batch_size=params.batch_size, shuffle=True)
+    test_set = DataLoader(test, batch_size=params.batch_size, shuffle=True)
 
     loaders = {"train": train_set, "validation": validation_set, "test": test_set}
     dataset_sizes = {

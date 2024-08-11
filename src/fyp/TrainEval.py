@@ -24,6 +24,10 @@ class Params:
     momentum: float = 0.75
     save_location: os.PathLike = None
     save_weights: bool = False
+    device: str = "cpu"
+
+    if save_location is not None and not os.path.isdir(save_location):
+        os.mkdir(save_location)
 
     @property
     def model_name(self):
@@ -39,25 +43,25 @@ class Params:
 
 
 class Pipeline:
-    def __init__(self, loaders, dataset_sizes, device):
+    def __init__(self, loaders, dataset_sizes, params):
         self.loaders = loaders
         self.dataset_sizes = dataset_sizes
-        self.device = device
+        self.params = params
 
-    def train_model(self, model, criterion, optimizer, epochs, scheduler=None):
+    def train_model(self, model, criterion, optimizer, scheduler=None):
         losses = {"train": [], "validation": []}
         accuracies = {"train": [], "validation": []}
 
         best_acc = 0.0
         since = time.time()
-        model = model.to(self.device)
+        model = model.to(self.params.device)
         best_model = copy.deepcopy(model.state_dict())
 
-        for epoch in range(epochs):
+        for epoch in range(self.params.epochs):
             for phase in ["train", "validation"]:
                 if phase == "train":
                     model.train()
-                    print("Epoch: {}/{}".format(epoch + 1, epochs))
+                    print("Epoch: {}/{}".format(epoch + 1, self.params.epochs))
                     print("Training")
                 elif phase == "validation":
                     model.eval()
@@ -67,7 +71,7 @@ class Pipeline:
                 running_corrects = 0.0
 
                 for X, label in tqdm(self.loaders[phase]):
-                    X, label = (X.to(self.device), label.to(self.device))
+                    X, label = (X.to(self.params.device), label.to(self.params.device))
                     optimizer.zero_grad()
 
                     with torch.set_grad_enabled(phase == "train"):
@@ -107,6 +111,7 @@ class Pipeline:
 
         model.load_state_dict(best_model)
         self.model = model
+        self.best_acc = float(best_acc)
         return model, losses, accuracies
 
     def evaluate_model(self, dataset):
@@ -114,7 +119,7 @@ class Pipeline:
         predictions, actuals = [], []
 
         for X, label in tqdm(self.loaders[dataset]):
-            X = X.to(self.device)
+            X = X.to(self.params.device)
 
             with torch.no_grad():
                 outputs = self.model(X)
@@ -134,4 +139,20 @@ class Pipeline:
                 dataset, round(acc, 5) * 100, round(f1, 5)
             )
         )
+        self.re_eval_split = dataset
+        self.re_eval_acc = acc
+        self.re_eval_f1 = f1
         return actuals, predictions
+
+    @property
+    def save_results(self):
+        path = (
+            self.params.save_location + "/" + self.params.model_name + ".txt"
+            if self.params.save_location is not None
+            else self.params.model_name + ".txt"
+        )
+
+        with open(path, "w") as f:
+            f.write(
+                f"Best validation accuracy: {round(self.best_acc, 5)}% \n \nEvaluated on {self.re_eval_split} set\n     Accuracy: {round(self.re_eval_acc, 5) * 100}%, f1-score: {round(self.re_eval_f1, 5)}"
+            )
