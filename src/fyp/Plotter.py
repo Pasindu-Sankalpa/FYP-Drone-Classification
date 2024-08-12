@@ -11,6 +11,9 @@ class Plotter:
         self.save_loc = params.save_location
         self.model_name = params.model_name
 
+        if params.save_location is not None and not os.path.isdir(params.save_location):
+            os.mkdir(params.save_location)
+
     def create_file_name(self, figure_name):
         if self.save_loc is None:
             if self.model_name is None:

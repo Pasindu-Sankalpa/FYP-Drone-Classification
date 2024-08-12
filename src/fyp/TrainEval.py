@@ -18,16 +18,13 @@ class Params:
     mode: Literal["detection", "classification"]
     lengths: tuple[float] = (0.7, 0.25, 0.05)
     epochs: int = 1
-    batch_size: int = 64
-    learning_rate: float = 2e-5
+    batch_size: int = 1024
+    learning_rate: float = 2.5e-4
     weight_decay: float = 0.2
     momentum: float = 0.75
     save_location: os.PathLike = None
     save_weights: bool = False
     device: str = "cpu"
-
-    if save_location is not None and not os.path.isdir(save_location):
-        os.mkdir(save_location)
 
     @property
     def model_name(self):
@@ -47,6 +44,9 @@ class Pipeline:
         self.loaders = loaders
         self.dataset_sizes = dataset_sizes
         self.params = params
+
+        if params.save_location is not None and not os.path.isdir(params.save_location):
+            os.mkdir(params.save_location)
 
     def train_model(self, model, criterion, optimizer, scheduler=None):
         losses = {"train": [], "validation": []}
@@ -154,5 +154,9 @@ class Pipeline:
 
         with open(path, "w") as f:
             f.write(
-                f"Best validation accuracy: {round(self.best_acc, 5)}% \n \nEvaluated on {self.re_eval_split} set\n     Accuracy: {round(self.re_eval_acc, 5) * 100}%, f1-score: {round(self.re_eval_f1, 5)}"
-            )
+                f"""Model: {self.params.model_prefix}
+Data: {"audio" if self.params.data_category == "mel" else "radar"}
+Mode: {self.params.mode}\n
+Best validation accuracy: {round(self.best_acc, 5)}% \n
+Test Accuracy: {round(self.re_eval_acc, 5) * 100}%
+Test f1-score: {round(self.re_eval_f1, 5)}""")
