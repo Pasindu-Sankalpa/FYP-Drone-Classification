@@ -43,11 +43,5 @@ plotter.plot_confusion_matrix(actuals, predictions, params.num_classes)
 pipeline.save_results
 
 if params.save_weights:
-    if params.save_location is not None and not os.path.isdir(params.save_location):
-        os.mkdir(params.save_location)
-    path = (
-        params.save_location + "/" + params.model_name + ".pth"
-        if params.save_location is not None
-        else params.model_name + ".pth"
-    )
+    path = f"/home/gevindu/Final_work/Saved models/Compare_{params.model_name}.pth"
     torch.save(model, path)
