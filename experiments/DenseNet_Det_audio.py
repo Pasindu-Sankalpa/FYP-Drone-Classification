@@ -3,20 +3,21 @@ from fyp.TrainEval import Pipeline, Params
 from fyp.Dataset import load_images
 from fyp.Models import TransferDenseNetDetection
 
+import os
 import torch
 from torch import nn
 from torch import optim
 
-device = "cuda" if torch.cuda.is_available() else "cpu"
-
 params = Params(
     model_prefix="DenseNet",
+    save_location="./DenseNet",
     data_category="mel",
     mode="detection",
-    save_location="./sample",
+    epochs=50,
+    batch_size = 1024,
+    learning_rate = 2.5e-4,
     save_weights=True,
-    epochs=2,
-    device = device
+    device = "cuda" if torch.cuda.is_available() else "cpu"
 )
 
 plotter = Plotter(params)
@@ -42,6 +43,8 @@ plotter.plot_confusion_matrix(actuals, predictions, params.num_classes)
 pipeline.save_results
 
 if params.save_weights:
+    if params.save_location is not None and not os.path.isdir(params.save_location):
+        os.mkdir(params.save_location)
     path = (
         params.save_location + "/" + params.model_name + ".pth"
         if params.save_location is not None

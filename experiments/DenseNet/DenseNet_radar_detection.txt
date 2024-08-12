@@ -1,0 +1,8 @@
+Model: DenseNet
+Data: radar
+Mode: detection
+
+Best validation accuracy: 74.03338% 
+
+Test Accuracy: 75.356%
+Test f1-score: 0.75102
