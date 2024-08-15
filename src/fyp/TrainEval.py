@@ -24,6 +24,7 @@ class Params:
     momentum: float = 0.75
     save_location: os.PathLike = None
     save_weights: bool = False
+    dataset_size: int = 9831
     device: str = "cpu"
 
     @property
@@ -159,4 +160,5 @@ Data: {"audio" if self.params.data_category == "mel" else "radar"}
 Mode: {self.params.mode}\n
 Best validation accuracy: {round(self.best_acc, 5)}% \n
 Test Accuracy: {round(self.re_eval_acc, 5) * 100}%
-Test f1-score: {round(self.re_eval_f1, 5)}""")
+Test f1-score: {round(self.re_eval_f1, 5)}"""
+            )

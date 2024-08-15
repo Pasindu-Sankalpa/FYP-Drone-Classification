@@ -12,18 +12,20 @@ from .TrainEval import Params
 
 
 class DroneData(Dataset):
-    num_data_points = 9830
-
     def __init__(
         self,
         data_category: Literal["mel", "rangeDoppler"],
         mode: Literal["detection", "classification"],
+        lower_lim: int,
+        upper_lim: int
     ) -> None:
         """Initialize the dataset for drone detection and classification
 
         Args:
             data_category: what to load, mel spectrograms or range Doppler maps
             mode: detection or classification
+            lower_lim: lower limit of indexes to load from disk
+            upper_lim: upper limit of indexes to load from disk
 
         """
         self._data_category = data_category
@@ -42,15 +44,15 @@ class DroneData(Dataset):
         )
 
         if mode == "detection":
-            self._datasets = {mode: np.arange(DroneData.num_data_points)}
+            self._datasets = {mode: range(lower_lim, upper_lim)}
         elif mode == "classification":
             self._datasets = {mode: []}
             for file_name in os.listdir(self._data_dir):
                 temp = file_name.split("_")
                 idx, det, cls = int(temp[2]), int(temp[4]), int(temp[6][0])
-                if det and cls:
+                if (det and cls) and idx in range(lower_lim, upper_lim):
                     self._datasets[mode].append(idx)
-            self._datasets[mode] = np.array(self._datasets[mode])
+        self._datasets[mode] = np.array(self._datasets[mode])
 
     def __len__(self) -> int:
         """Return the number of data points."""
@@ -100,9 +102,19 @@ def load_images(params: Params) -> tuple[dict[str, DataLoader], dict[str, int]]:
         tuple of loaders dictionary and split lengths dictionary
 
     """
-    train, validation, test = random_split(
-        DroneData(params.data_category, params.mode), lengths=params.lengths
-    )
+    def get_indexes(lengths, dataset_size):
+        if not isinstance(lengths, np.ndarray):
+            lengths = np.array(lengths)
+        
+        indexes = np.zeros(lengths.shape[0]+1)
+        indexes[1:] = np.cumsum(lengths)
+        return (indexes*dataset_size).astype(np.int32)
+    
+    indexs = get_indexes(params.lengths, params.dataset_size)
+    
+    train = DroneData(params.data_category, params.mode, indexs[0], indexs[1])
+    validation = DroneData(params.data_category, params.mode, indexs[1], indexs[2])
+    test = DroneData(params.data_category, params.mode, indexs[2], indexs[3])
 
     train_set = DataLoader(train, batch_size=params.batch_size, shuffle=True)
     validation_set = DataLoader(validation, batch_size=params.batch_size, shuffle=True)
