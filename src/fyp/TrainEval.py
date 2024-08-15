@@ -135,7 +135,7 @@ class Pipeline:
         f1 = f1_score(actuals, predictions, average="weighted", zero_division=0)
 
         print(
-            "\nEvaluated on {} set\n accuracy: {}%, f1-score: {}".format(
+            "\nEvaluated on {} set\naccuracy: {}%, f1-score: {}\n".format(
                 dataset, round(acc, 5) * 100, round(f1, 5)
             )
         )

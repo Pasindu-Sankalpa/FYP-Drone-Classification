@@ -2,7 +2,7 @@ Model: DenseNet
 Data: audio
 Mode: detection
 
-Best validation accuracy: 93.85429% 
+Best validation accuracy: 95.6451% 
 
-Test Accuracy: 93.075%
-Test f1-score: 0.93077
+Test Accuracy: 96.334%
+Test f1-score: 0.9633
