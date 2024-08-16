@@ -14,7 +14,7 @@ from sklearn.metrics import accuracy_score, f1_score
 @dataclass
 class Params:
     model_prefix: str
-    data_category: Literal["mel", "rangeDoppler"]
+    data_category: Literal["mel", "rangeDoppler", "fusion"]
     mode: Literal["detection", "classification"]
     lengths: tuple[float] = (0.7, 0.25, 0.05)
     epochs: int = 1
@@ -29,7 +29,13 @@ class Params:
 
     @property
     def model_name(self):
-        cat = "audio" if self.data_category == "mel" else "radar"
+        if self.data_category == "mel":
+            cat = "audio"
+        elif self.data_category == "rangeDoppler":
+            cat = "radar"
+        else:
+            cat = "fusion"
+    
         return f"{self.model_prefix}_{cat}_{self.mode}"
 
     @property
@@ -159,6 +165,6 @@ class Pipeline:
 Data: {"audio" if self.params.data_category == "mel" else "radar"}
 Mode: {self.params.mode}\n
 Best validation accuracy: {round(self.best_acc, 5)}% \n
-Test Accuracy: {round(self.re_eval_acc, 5) * 100}%
+Test accuracy: {round(self.re_eval_acc, 5) * 100}%
 Test f1-score: {round(self.re_eval_f1, 5)}"""
             )

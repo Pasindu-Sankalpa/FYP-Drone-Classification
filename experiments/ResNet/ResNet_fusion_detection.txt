@@ -1,0 +1,6 @@
+Model: ResNet
+Data: fusion
+Mode: detection
+
+Test Accuracy: 75.0%
+Test f1-score: 0.74912

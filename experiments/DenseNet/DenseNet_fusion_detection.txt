@@ -1,0 +1,6 @@
+Model: DenseNet
+Data: fusion
+Mode: detection
+
+Test accuracy: 75.0%
+Test f1-score: 0.74936

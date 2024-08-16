@@ -4,5 +4,5 @@ Mode: detection
 
 Best validation accuracy: 74.45078% 
 
-Test Accuracy: 74.797%
+Test accuracy: 74.797%
 Test f1-score: 0.74687
