@@ -2,7 +2,7 @@ Model: ResNet
 Data: radar
 Mode: detection
 
-Best validation accuracy: 74.80668% 
+Best validation accuracy: 73.71847% 
 
-Test Accuracy: 73.32%
-Test f1-score: 0.73349
+Test Accuracy: 75.0%
+Test f1-score: 0.74898
