@@ -1,4 +1,7 @@
-# Final Year Project
-## Deep learning-based Drone Classification by utilizing Radar Cross Section Signatures
+# Deep learning-based Drone Classification by utilizing Radar Cross Section Signatures
 
 In recent years, drones have become a popular technology for various applications. However, the increasing usage of drones has raised concerns regarding privacy, safety, and security. One way to mitigate these concerns is to detect and classify drones using radar cross section (RCS) signatures at millimeter-wave (mm-Wave) frequencies. This project proposes using deep learning algorithms to classify drones based on their RCS signatures.
+
+We have develop our own deep learning models to detect and classify drones, and this branch compares our results with [this paper](https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=10175389).
+
+Comparison results can be found [here](https://docs.google.com/spreadsheets/d/18ObJ9X5jzNOsJYy5bvYpmK2orfHB0HsXJT87Lxic-QQ/edit?gid=0#gid=0).
