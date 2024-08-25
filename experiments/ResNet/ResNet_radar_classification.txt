@@ -1,0 +1,8 @@
+Model: ResNet
+Data: radar
+Mode: classification
+
+Best validation accuracy: 34.7541% 
+
+Test accuracy: 32.046%
+Test f1-score: 0.30814

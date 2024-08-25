@@ -1,0 +1,8 @@
+Model: DenseNet
+Data: audio
+Mode: classification
+
+Best validation accuracy: 91.06557% 
+
+Test accuracy: 90.347%
+Test f1-score: 0.903

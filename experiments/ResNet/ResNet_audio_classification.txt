@@ -1,0 +1,8 @@
+Model: ResNet
+Data: audio
+Mode: classification
+
+Best validation accuracy: 86.14754% 
+
+Test accuracy: 87.259%
+Test f1-score: 0.87184
