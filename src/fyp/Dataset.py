@@ -155,7 +155,7 @@ def load_images(
 
     """
 
-    def get_indexes(lengths, dataset_size):
+    def _get_indexes(lengths, dataset_size):
         if not isinstance(lengths, np.ndarray):
             lengths = np.array(lengths)
 
@@ -163,7 +163,7 @@ def load_images(
         indexes[1:] = np.cumsum(lengths)
         return (indexes * dataset_size).astype(np.int32)
 
-    indexs = get_indexes(params.lengths, params.dataset_size)
+    indexs = _get_indexes(params.lengths, params.dataset_size)
 
     if params.data_category == "fusion":
         train = FusionDroneData(params.mode, indexs[0], indexs[1])
