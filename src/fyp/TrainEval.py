@@ -190,23 +190,23 @@ class FusionPipeline:
         Returns:
             two torch tensors of shape (minibatch, 4) respectively for radar probabilitis and audio probabilitis.
         """
-        radar_densenet = torch.load(
+        radar = torch.load(
             f"/home/gevindu/Final_work/Saved models/Compare_{self.params.model_prefix}_radar_{self.params.mode}.pth",
             map_location=self.params.device,
         )
-        radar_densenet.eval()
+        radar.eval()
 
-        audio_densenet = torch.load(
+        audio = torch.load(
             f"/home/gevindu/Final_work/Saved models/Compare_{self.params.model_prefix}_audio_{self.params.mode}.pth",
             map_location=self.params.device,
         )
-        audio_densenet.eval()
+        audio.eval()
 
         sign = torch.nn.Sigmoid()
 
         with torch.no_grad():
-            out_radar = sign(radar_densenet(radar)[:, 1:])
-            out_audio = sign(audio_densenet(audio)[:, 1:])
+            out_radar = sign(radar(radar)[:, 1:])
+            out_audio = sign(audio(audio)[:, 1:])
 
         return out_radar, out_audio, label-1
 
