@@ -11,9 +11,9 @@ params = Params(
     save_location="./DenseNet",
     data_category="fusion",
     mode="classification",
-    epochs=10,
+    epochs=30,
     batch_size=64,
-    learning_rate=2.5e-3,
+    learning_rate=1e-3,
     save_weights=True,
     device="cuda" if torch.cuda.is_available() else "cpu",
 )

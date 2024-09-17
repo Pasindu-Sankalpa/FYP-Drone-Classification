@@ -1,0 +1,8 @@
+Model: DenseNet
+Data: radar
+Mode: classification
+
+Best validation accuracy: 71.96722% 
+
+Test accuracy: 68.34%
+Test f1-score: 0.67328
