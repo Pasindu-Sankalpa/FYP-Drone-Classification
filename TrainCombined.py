@@ -7,13 +7,12 @@ from Plotter import Plotter
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print("Device:", device, "\n")
 
-#change here
 arg_dict = {
-    "model name": "Ablation_range_Doppler_only_v2",
-    "epochs": 1,
+    "model name": "Ablation_acoustic_only_n=0.005",
+    "epochs": 20,
     "batch_size": 64,
-    "lr": 1e-5,
-    "weight_decay": 0.4
+    "lr": 1e-6,
+    "weight_decay": 0
 }
 
 train, validation, test = random_split(
@@ -54,6 +53,5 @@ plotter.plot_confusion_matrix(actuals, predictions, 2, figure_name="Detection co
 actuals, predictions = train_n_evaluate.evaluate_model(model, dataset="test", mode=1)
 plotter.plot_confusion_matrix(actuals, predictions, 5, figure_name="Classification confusion matrix")
 
-torch.save(model, f"/home/gevindu/model_final/Saved models/{arg_dict['model name']}.pth")
-print(f"\nSaved to /home/gevindu/model_final/Saved models/{arg_dict['model name']}.pth")
-
+torch.save(model, f"/home/gevindu/Final_work/Saved models/{arg_dict['model name']}.pth")
+print(f"\nSaved to /home/gevindu/Final_work/Saved models/{arg_dict['model name']}.pth")

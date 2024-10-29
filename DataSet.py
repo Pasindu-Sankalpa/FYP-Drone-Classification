@@ -647,6 +647,7 @@ class CombinedDataSet(Dataset):
         else:
             index = np.random.randint(0, droneSound.shape[0] - 8000)
             droneSound = droneSound[index : index + 8000]
+        droneSound = droneSound + np.random.normal(0,0.005, len(droneSound)) 
         return (droneSound - np.mean(droneSound)) / np.std(droneSound)
 
     def __dopplerProcess(self, beat_signal: np.ndarray) -> np.ndarray:
@@ -704,15 +705,15 @@ class CombinedDataSet(Dataset):
         )
 
         return (
-            torch.tensor(self.__dopplerProcess(beat_signal), dtype=torch.float),
+            # torch.tensor(self.__dopplerProcess(beat_signal), dtype=torch.float),
             # torch.tensor(self.__rcsProcess(beat_signal, distance), dtype=torch.float),
-            # torch.tensor(
-            #     self.__readAudio(
-            #         f"{self.datasetDir}/{self.dataHolder[idx][0]}.wav",
-            #         frame=self.dataHolder[idx][1],
-            #     ),
-            #     dtype=torch.float,
-            # ),
+            torch.tensor(
+                self.__readAudio(
+                    f"{self.datasetDir}/{self.dataHolder[idx][0]}.wav",
+                    frame=self.dataHolder[idx][1],
+                ),
+                dtype=torch.float,
+            ),
             torch.tensor(self.dataHolder[idx][2], dtype=torch.float),
             torch.tensor(self.dataHolder[idx][3], dtype=torch.float),
         )
